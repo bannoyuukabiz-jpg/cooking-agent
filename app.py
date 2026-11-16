@@ -2,35 +2,26 @@ import streamlit as st
 import google.generativeai as genai
 from datetime import datetime
 
-# --- ページ設定 ---
 st.set_page_config(
     page_title="うしのクッキング",
     page_icon="🐮",
     layout="centered"
 )
 
-# --- 北欧ナチュラル＆スマホライク風デザインのCSS適用（プルダウンや履歴の背景も白に統一） ---
 st.markdown("""
 <style>
-    /* 全体の背景と文字色 */
     .stApp {
         background-color: #FAF8F5 !important;
         color: #2C3E2D !important;
     }
-    
-    /* 見出しの色 */
     h1, h2, h3 {
         color: #4A5D43 !important;
         font-family: 'Helvetica Neue', Arial, sans-serif;
     }
-    
-    /* ラベルや文字をくっきりと見やすく */
     label, .stTextInput label, .stTextArea label, p, span {
         color: #2C3E2D !important;
         font-weight: 500;
     }
-    
-    /* ボタンを角丸で可愛い北欧風カラーにする */
     .stButton > button {
         background-color: #E29578 !important;
         color: white !important;
@@ -45,22 +36,16 @@ st.markdown("""
         background-color: #D37A5C !important;
         color: white !important;
     }
-    
-    /* 入力欄・テキストエリア・プルダウン・情報表示の背景をすべて白に統一 */
     .stTextInput input, textarea, div[data-baseweb="input"] > div, div[data-baseweb="textarea"] > div, div[data-baseweb="select"] > div, .stInfo {
         background-color: #FFFFFF !important;
         color: #2C3E2D !important;
         border-radius: 12px !important;
         border: 1px solid #D8CEC3 !important;
     }
-    
-    /* プルダウンの選択肢ポップアップの背景も明るく */
     div[data-baseweb="popover"], div[data-baseweb="menu"] {
         background-color: #FFFFFF !important;
         color: #2C3E2D !important;
     }
-    
-    /* エクスパンダー（履歴などの折りたたみ）の背景を白に統一 */
     .streamlit-expanderHeader {
         background-color: #FFFFFF !important;
         border-radius: 12px !important;
@@ -77,7 +62,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- セッション状態の初期化 ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
@@ -101,7 +85,6 @@ if "favorites" not in st.session_state:
         "キャベツの温野菜サラダ（ヘルシオ使用）"
     ]
 
-# --- パスワード認証画面 ---
 if not st.session_state.authenticated:
     st.title("🔒 ログイン")
     st.write("お二人専用のキッチンアプリです。下のボタンを押して入室してください。")
@@ -110,20 +93,9 @@ if not st.session_state.authenticated:
         st.rerun()
     st.stop()
 
-# --- メインアプリ画面 ---
 st.title("🐮 うしのクッキング")
 st.write("今日はなに食べよう？🐮")
 
-# --- スマホライクなアイコン付きメニュー選択（LINEのタブ風） ---
-menu_options = {
-    "🛒 なにがあるかな？": "🛒 なにがあるかな？",
-    "⚙️ キッチン用品": "⚙️ キッチン用品",
-    "🍲 なに食べよう？": "🍲 なに食べよう？",
-    "📜 履歴": "📜 履歴",
-    "⭐ お気に入り": "⭐ お気に入り"
-}
-
-# 横並びのボタン風カラムでスマホのタブバーのように配置
 col_t1, col_t2, col_t3, col_t4, col_t5 = st.columns(5)
 
 if "current_menu" not in st.session_state:
@@ -142,7 +114,7 @@ with col_t4:
     if st.button("📜\n履歴", key="tab_4"):
         st.session_state.current_menu = "📜 履歴"
 with col_t5:
-    if st.button("⭐\nお茶", key="tab_5"): # 省略してコンパクトに
+    if st.button("⭐\nお茶", key="tab_5"):
         st.session_state.current_menu = "⭐ お気に入り"
 
 st.markdown(f"**現在地： {st.session_state.current_menu}**")
@@ -150,7 +122,6 @@ st.divider()
 
 menu = st.session_state.current_menu
 
-# --- 1. なにがあるかな？ ---
 if menu == "🛒 なにがあるかな？":
     st.header("🛒 なにがあるかな？")
     st.write("冷蔵庫にある食材を登録しましょう！")
@@ -218,7 +189,6 @@ if menu == "🛒 なにがあるかな？":
     else:
         st.info("食材が登録されていません。")
 
-# --- 2. キッチン用品 ---
 elif menu == "⚙️ キッチン用品":
     st.header("⚙️ キッチン用品")
     st.write("おうちにある家電や調理器具を登録できます。")
@@ -254,4 +224,60 @@ elif menu == "⚙️ キッチン用品":
             
     st.divider()
     st.subheader("おうちにあるキッチン用品")
-    if st.session_
+    if st.session_state.tools:
+        for i, tool in enumerate(st.session_state.tools):
+            with st.container():
+                st.markdown(f"**🍳 {tool['name']}**")
+                st.markdown(f"{tool['feature']}")
+                if st.button("🗑️ 削除", key=f"del_tool_{i}"):
+                    st.session_state.tools.pop(i)
+                    st.rerun()
+                st.markdown("---")
+    else:
+        st.info("キッチン用品が登録されていません。")
+
+elif menu == "🍲 なに食べよう？":
+    st.header("🍲 なに食べよう？")
+    
+    style_option = st.selectbox(
+        "今日の気分・調理方法を選んでね",
+        ["おまかせ", "時短・簡単", "ヘルシー・さっぱり", "がっつりスタミナ", "ヘルシオでジューシーに", "自由に入力する"]
+    )
+    
+    if style_option == "自由に入力する":
+        cooking_style = st.text_input("ご自身の気分・リクエストを入力してください")
+    else:
+        cooking_style = style_option
+        
+    if st.button("✨ 献立を考えてもらう！"):
+        with st.spinner("うしさんが冷蔵庫の食材とキッチン用品から考えています..."):
+            inv_formatted = []
+            for i in st.session_state.inventory:
+                if i['quantity'].strip():
+                    inv_formatted.append(f"{i['name']} ({i['quantity']})")
+                else:
+                    inv_formatted.append(f"{i['name']}")
+            
+            inv_text = ", ".join(inv_formatted)
+            tools_text = ", ".join([f"{t['name']} ({t['feature']})" for t in st.session_state.tools])
+            
+            try:
+                api_key = st.secrets.get("GEMINI_API_KEY", "")
+                if api_key:
+                    genai.configure(api_key=api_key)
+                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    
+                    prompt = (
+                        "あなたは家庭の優秀な料理アシスタントです。\n"
+                        "以下の冷蔵庫の在庫食材と、利用できるキッチン用品を使って、おすすめの献立（主菜・副菜など）を1つ提案してください。\n\n"
+                        "【冷蔵庫の在庫】\n" + (inv_text if inv_text else "特になし") + "\n\n"
+                        "【キッチン用品】\n" + (tools_text if tools_text else "特になし") + "\n\n"
+                        "【本日のリクエスト】\n" + cooking_style + "\n\n"
+                        "出力には、料理名、材料、簡単な作り方の手順、およびそのキッチン用品を活用するポイントを含めてください。"
+                    )
+                    
+                    response = model.generate_content(prompt)
+                    result_text = response.text
+                else:
+                    result_text = (
+                        "**メニュー名：トマトと豚肉のジューシー炒
