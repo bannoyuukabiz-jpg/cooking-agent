@@ -77,14 +77,12 @@ with t5:
 st.divider()
 m = st.session_state.current_menu
 
-# --- 1. 食材タブ ---
 if m == "🛒 食材":
     st.header("🛒 食材")
     st.write("冷蔵庫にある食材を登録しましょう！")
     fn = st.text_input("食材名（例：米、キャベツ、豚肉など）")
     fq = st.text_input("数量（例：1袋、200g ※未入力でもOK）")
     
-    # 指定された7つのカテゴリへの自動振り分けロジック
     def guess_cat(name):
         n = name.lower()
         if any(w in n for w in ["米", "小麦粉", "パン", "パスタ", "うどん", "そば", "シリアル", "麺"]): return "🌾穀物・麺類・パン"
@@ -94,20 +92,21 @@ if m == "🛒 食材":
         elif any(w in n for w in ["牛乳", "チーズ", "ヨーグルト", "豆腐", "納豆", "油揚げ", "豆乳"]): return "🥛乳製品・大豆製品"
         elif any(w in n for w in ["醤油", "味噌", "砂糖", "塩", "酢", "マヨネーズ", "油", "ケチャップ", "ソース"]): return "🧂調味料・油"
         elif any(w in n for w in ["お菓子", "チョコレート", "スナック", "和菓子", "洋菓子", "アイス", "クッキー", "ケーキ"]): return "🍰お菓子・スイーツ"
-        return "🥑野菜・果物" # デフォルト
+        return "🥑野菜・果物"
 
     if st.button("✨ 食材を追加する"):
         if fn:
             cat = guess_cat(fn)
             st.session_state.inventory.append({"category": cat, "name": fn, "quantity": fq.strip()})
-            st.success(f"「{fn}」を【{cat}】に追加しました！"); st.rerun()
-        else: st.warning("食材名を入力してください。")
+            st.success(f"「{fn}」を【{cat}】に追加しました！")
+            st.rerun()
+        else:
+            st.warning("食材名を入力してください。")
             
     st.divider()
     st.subheader("おうちにある食材")
     
     if st.session_state.inventory:
-        # 定義された7つのカテゴリの順番
         all_categories = [
             "🌾穀物・麺類・パン",
             "🥑野菜・果物",
@@ -118,14 +117,11 @@ if m == "🛒 食材":
             "🍰お菓子・スイーツ"
         ]
         
-        # 実際に登録されているカテゴリをフィルタリング（順番維持）
         existing_cats = [c for c in all_categories if any(item['category'] == c for item in st.session_state.inventory)]
-        # 定義外のカテゴリがあれば最後に追加
         other_cats = list(set(item['category'] for item in st.session_state.inventory if item['category'] not in all_categories))
         display_cats = existing_cats + other_cats
         
         for idx, cat in enumerate(display_cats):
-            # カテゴリごとにプルダウン（expander）で開閉できるようにする
             with st.expander(f"📁 {cat}", expanded=True):
                 for original_i, item in enumerate(st.session_state.inventory):
                     if item['category'] == cat:
@@ -133,26 +129,4 @@ if m == "🛒 食材":
                             col_c, col_n, col_q, col_btn = st.columns([2.5, 3, 2, 1.5])
                             with col_c: nc = st.text_input("カテゴリ", value=item['category'], key=f"c_{original_i}")
                             with col_n: nn = st.text_input("食材名", value=item['name'], key=f"n_{original_i}")
-                            with col_q: nq = st.text_input("数量", value=item['quantity'], key=f"q_{original_i}")
-                            
-                            with col_btn:
-                                st.write("") # 位置調整
-                                if st.button("💾 更新", key=f"up_{original_i}"):
-                                    st.session_state.inventory[original_i] = {"category": nc, "name": nn, "quantity": nq}
-                                    st.success("更新しました！"); st.rerun()
-                                if st.button("🗑️ 削除", key=f"dl_{original_i}"):
-                                    st.session_state.inventory.pop(original_i); st.rerun()
-                        # カテゴリ内には区切り線を入れない仕様
-            
-            # カテゴリの間には薄い区切り線を入れる（最後のカテゴリ以外）
-            if idx < len(display_cats) - 1:
-                st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E5DDD5;'>", unsafe_allow_html=True)
-    else: 
-        st.info("食材が登録されていません。")
-
-# --- 2. キッチン用品タブ ---
-elif m == "⚙️ キッチン用品":
-    st.header("⚙️ キッチン用品")
-    ti = st.text_input("キッチン用品名", value="ヘルシオ")
-    
-    def
+                            with col_q: nq = st.text_
