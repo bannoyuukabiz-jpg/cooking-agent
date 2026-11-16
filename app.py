@@ -8,7 +8,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- 北欧ナチュラル風デザインのCSS適用（すべての入力・カード部分を明るく統一） ---
+# --- 北欧ナチュラル風デザインのCSS適用 ---
 st.markdown("""
 <style>
     /* 全体の背景と文字色 */
@@ -134,4 +134,75 @@ with tab2:
     new_tool_name = st.text_input("ツール・家電名", value="ヘルシオ")
     new_tool_feature = st.text_area("特徴・得意なこと", value="過熱水蒸気でジューシーに焼くのが得意")
     
-    if st.
+    if st.button("💾 ツール情報を保存"):
+        if new_tool_name:
+            st.session_state.tools.append({
+                "name": new_tool_name,
+                "feature": new_tool_feature
+            })
+            st.success("ツール情報を保存しました！")
+        else:
+            st.warning("ツール名を入力してください。")
+            
+    st.divider()
+    st.subheader("🔖 登録中のツール一覧")
+    for tool in st.session_state.tools:
+        st.markdown(f"- **{tool['name']}**: {tool['feature']}")
+
+# --- Tab 3: 献立提案 ---
+with tab3:
+    st.header("🍲 今日の献立提案")
+    cooking_style = st.text_input("今日の気分・調理方法（例：時短、ヘルシー、ヘルシオでジューシーに）", value="おまかせ")
+    
+    if st.button("✨ 献立を考えてもらう！"):
+        with st.spinner("AIが冷蔵庫の食材とツールを組み合わせて考えています..."):
+            inv_text = ", ".join([f"{i['name']} ({i['quantity']})" for i in st.session_state.inventory])
+            tools_text = ", ".join([f"{t['name']} ({t['feature']})" for t in st.session_state.tools])
+            
+            try:
+                api_key = st.secrets.get("GEMINI_API_KEY", "")
+                if api_key:
+                    genai.configure(api_key=api_key)
+                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    prompt = f"""
+                    あなたは家庭の優秀な料理アシスタントです。
+                    以下の冷蔵庫の在庫食材と、利用できる調理ツールを使って、おすすめの献立（主菜・副菜など）を1つ提案してください。
+                    
+                    【冷蔵庫の在庫】
+                    {inv_text if inv_text else "特になし"}
+                    
+                    【調理ツール】
+                    {tools_text if tools_text else "特になし"}
+                    
+                    【本日のリクエスト】
+                    {cooking_style}
+                    
+                    出力には、料理名、材料、簡単な作り方の手順、およびそのツールを活用するポイントを含めてください。
+                    """
+                    response = model.generate_content(prompt)
+                    st.markdown("### 💡 AIからの献立提案")
+                    st.write(response.text)
+                else:
+                    st.markdown("### 💡 AIからの献立提案（デモモード）")
+                    st.success("APIキーが未設定のため、サンプル提案を表示しています。")
+                    st.markdown(f"""
+                    **メニュー名：トマトと豚肉のヘルシオジューシー炒め**
+                    - **使った食材：** トマト ({next((i['quantity'] for i in st.session_state.inventory if i['name']=='トマト'), '3個')}), 豚肉スライス
+                    - **調理ツール：** ヘルシオ（過熱水蒸気）
+                    - **作り方：**
+                      1. 豚肉と切ったトマトを耐熱容器に入れます。
+                      2. ヘルシオの「まかせて調理（焼く）」または「炒め物コース」にセットします。
+                      3. 過熱水蒸気でジューシーに仕上がり完成です！
+                    """)
+            except Exception as e:
+                st.error(f"エラーが発生しました: {e}")
+
+# --- Tab 4: お気に入り ---
+with tab4:
+    st.header("⭐ お気に入りのレシピ")
+    st.write("保存したお気に入りの料理を見返せます。")
+    if st.session_state.favorites:
+        for fav in st.session_state.favorites:
+            st.markdown(f"- 🍳 **{fav}**")
+    else:
+        st.info("お気に入りはまだ登録されていません。")
