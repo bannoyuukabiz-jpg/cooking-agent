@@ -204,7 +204,6 @@ if menu == "🛒 なにがあるかな？":
             with st.expander(f"{cat_name} ({len(cat_items)}件)", expanded=True):
                 if cat_items:
                     for i, item in cat_items:
-                        # カテゴリ、食材名、数量、更新ボタン、削除ボタンを整理
                         new_cat = st.selectbox("カテゴリ", categories, index=categories.index(item['category']), key=f"cat_{i}")
                         col_n, col_q = st.columns([3, 2])
                         with col_n:
@@ -230,7 +229,6 @@ if menu == "🛒 なにがあるかな？":
                 else:
                     st.info("登録されている食材はありません。")
             
-            # カテゴリの間には薄い区切り線を入れるがカテゴリ内には入れない
             if idx < len(categories) - 1:
                 st.markdown("<hr style='margin: 15px 0; border: none; border-top: 1px solid #E2D9CE;'>", unsafe_allow_html=True)
     else:
@@ -326,5 +324,38 @@ elif menu == "🍲 なに食べよう？":
                     response = model.generate_content(prompt)
                     result_text = response.text
                 else:
-                    result_text = (
-                        "**メニュー名：トマトと豚肉のジューシー炒め
+                    result_text = """**メニュー名：トマトと豚肉のジューシー炒め**
+- **使った食材：** トマト, 豚肉スライス
+- **キッチン用品：** ヘルシオ
+- **作り方：**
+  1. 豚肉と切ったトマトを耐熱容器に入れます。
+  2. ヘルシオのまかせて調理にセットします。
+  3. ジューシーに仕上がり完成です！"""
+                
+                timestamp = datetime.now().strftime("%m/%d %H:%M")
+                st.session_state.history.insert(0, {"time": timestamp, "style": cooking_style, "content": result_text})
+                
+                st.markdown("### 💡 提案された献立")
+                st.markdown(result_text)
+                
+            except Exception as e:
+                st.error(f"エラーが発生しました: {e}")
+
+elif menu == "📜 履歴":
+    st.header("📜 履歴")
+    st.write("過去に生成した献立の記録です。")
+    if st.session_state.history:
+        for idx, h in enumerate(st.session_state.history):
+            with st.expander(f"🕒 {h['time']} - リクエスト: {h['style']}"):
+                st.markdown(h['content'])
+    else:
+        st.info("まだ生成された履歴はありません。「なに食べよう？」から献立を作ってみてね！")
+
+elif menu == "⭐ お気に入り":
+    st.header("⭐ お気に入りのレシピ")
+    st.write("保存したお気に入りの料理を見返せます。")
+    if st.session_state.favorites:
+        for fav in st.session_state.favorites:
+            st.markdown(f"- 🍳 **{fav}**")
+    else:
+        st.info("お気に入りはまだ登録されていません。")
