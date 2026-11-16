@@ -1,29 +1,30 @@
 import streamlit as st
 import google.generativeai as genai
+from datetime import datetime
 
 # --- ページ設定 ---
 st.set_page_config(
-    page_title="おうちクッキングエージェント",
-    page_icon="🍳",
+    page_title="うしのクッキング",
+    page_icon="🐮",
     layout="centered"
 )
 
-# --- 北欧ナチュラル風デザインのCSS適用 ---
+# --- 北欧ナチュラル＆スマホライク風デザインのCSS適用 ---
 st.markdown("""
 <style>
     /* 全体の背景と文字色 */
     .stApp {
-        background-color: #FAF8F5 !important; /* 温かみのあるオフホワイト */
-        color: #2C3E2D !important; /* 濃いナチュラルグリーン */
+        background-color: #FAF8F5 !important;
+        color: #2C3E2D !important;
     }
     
-    /* 見出しの色や雰囲気 */
+    /* 見出しの色 */
     h1, h2, h3 {
-        color: #4A5D43 !important; /* 深みのあるくすみグリーン */
+        color: #4A5D43 !important;
         font-family: 'Helvetica Neue', Arial, sans-serif;
     }
     
-    /* 入力欄の上のラベルやテキストの文字をくっきりと見やすくする */
+    /* ラベルや文字をくっきりと見やすく */
     label, .stTextInput label, .stTextArea label, p, span {
         color: #2C3E2D !important;
         font-weight: 500;
@@ -31,9 +32,9 @@ st.markdown("""
     
     /* ボタンを角丸で可愛い北欧風カラーにする */
     .stButton > button {
-        background-color: #E29578 !important; /* サーモンピンク・テラコッタ系 */
+        background-color: #E29578 !important;
         color: white !important;
-        border-radius: 20px !important; /* 角を丸く */
+        border-radius: 20px !important;
         border: none !important;
         padding: 0.5rem 1.5rem !important;
         font-weight: bold !important;
@@ -45,7 +46,7 @@ st.markdown("""
         color: white !important;
     }
     
-    /* 入力欄・テキストエリア・情報表示エリアの背景を確実に白にする */
+    /* 入力欄・テキストエリア・情報表示の背景を白に */
     .stTextInput input, textarea, div[data-baseweb="input"] > div, div[data-baseweb="textarea"] > div, .stInfo {
         background-color: #FFFFFF !important;
         color: #2C3E2D !important;
@@ -70,6 +71,9 @@ if "tools" not in st.session_state:
         {"name": "ヘルシオ オーブンレンジ", "feature": "過熱水蒸気でノンフライ調理や蒸し焼きが得意"}
     ]
 
+if "history" not in st.session_state:
+    st.session_state.history = []
+
 if "favorites" not in st.session_state:
     st.session_state.favorites = [
         "トマトと豚肉のヘルシオジューシー炒め",
@@ -78,85 +82,156 @@ if "favorites" not in st.session_state:
 
 # --- パスワード認証画面 ---
 if not st.session_state.authenticated:
-    st.title("🔒 クッキングエージェントへようこそ")
+    st.title("🔒 ログイン")
     st.write("お二人専用のキッチンアプリです。下のボタンを押して入室してください。")
-    if st.button("🍳 アプリに入室する（お母様・あなた）"):
+    if st.button("🐮 うしのクッキングに入室する"):
         st.session_state.authenticated = True
         st.rerun()
     st.stop()
 
-# --- メインアプリ画面（4つのタブ） ---
-st.title("🍳 おうちクッキングエージェント")
-st.write("🌿 冷蔵庫の食材やツールを管理して、ぴったりの献立をご提案します！")
+# --- メインアプリ画面（スマホライクなタブ構成） ---
+st.title("🐮 うしのクッキング")
+st.write("今日はなに食べよう？🐮")
 
-tab1, tab2, tab3, tab4 = st.tabs(["🛒 食材の在庫", "⚙️ ツール設定", "🍲 献立提案", "⭐ お気に入り"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["🛒 なにかある？", "⚙️ キッチン用品", "🍲 なに食べよう？", "📜 履歴", "⭐ お気に入り"])
 
-# --- Tab 1: 食材の在庫管理 ---
+# --- Tab 1: なにかある？（食材の在庫管理・自動カテゴリ・編集機能） ---
 with tab1:
-    st.header("🛒 冷蔵庫の食材を登録・編集する")
+    st.header("🛒 なにかある？")
+    st.write("冷蔵庫にある食材を登録しましょう！")
     
-    category = st.text_input("カテゴリ名（例：野菜、肉、調味料）", value="野菜")
-    col1, col2 = st.columns(2)
-    with col1:
-        food_name = st.text_input("食材名（例：キャベツ、卵）")
-    with col2:
-        food_quantity = st.text_input("数量（例：1玉、1パック）", value="1つ")
-        
+    # 入力フォーム
+    food_name_input = st.text_input("食材名（例：キャベツ、豚肉、牛乳など）")
+    food_qty_input = st.text_input("数量（例：1玉、200g ※未入力でもOK）")
+    
+    # 自動カテゴリ判定のロジック
+    def guess_category(name):
+        name_lower = name.lower()
+        if any(w in name_lower for w in ["トマト", "キャベツ", "レタス", "玉ねぎ", "人参", "きゅうり", "じゃがいも", "野菜", "ネギ"]):
+            return "野菜"
+        elif any(w in name_lower for w in ["豚", "鶏", "牛", "肉", "ベーコン", "ソーセージ", "ひき肉"]):
+            return "肉"
+        elif any(w in name_lower for w in ["鮭", "鯖", "えび", "魚", "アジ", "シーフード"]):
+            return "魚介"
+        elif any(w in name_lower for w in ["牛乳", "チーズ", "バター", "卵", "ヨーグルト"]):
+            return "乳製品・卵"
+        elif any(w in name_lower for w in ["醤油", "味噌", "砂糖", "塩", "油", "マヨネーズ", "ケチャップ", "ソース"]):
+            return "調味料"
+        else:
+            return "その他"
+
     if st.button("✨ 食材を追加する"):
-        if food_name:
+        if food_name_input:
+            auto_cat = guess_category(food_name_input)
             st.session_state.inventory.append({
-                "category": category,
-                "name": food_name,
-                "quantity": food_quantity
+                "category": auto_cat,
+                "name": food_name_input,
+                "quantity": food_qty_input.strip()
             })
-            st.success(f"「{category}」カテゴリに「{food_name} ({food_quantity})」を追加しました！")
+            st.success(f"「{food_name_input}」を登録しました！（自動分類：{auto_cat}）")
+            st.rerun()
         else:
             st.warning("食材名を入力してください。")
             
     st.divider()
-    st.subheader("📋 現在登録されている食材一覧")
+    st.subheader("おうちにある食材")
+    
     if st.session_state.inventory:
         for i, item in enumerate(st.session_state.inventory):
-            c1, c2, c3 = st.columns([2, 3, 2])
-            c1.write(f"📁 {item['category']}")
-            c2.write(f"🥕 **{item['name']}** ({item['quantity']})")
-            if c3.button("削除", key=f"del_inv_{i}"):
-                st.session_state.inventory.pop(i)
-                st.rerun()
+            with st.container():
+                # スマホでも見やすいように編集フォームを展開式または横並びに
+                col_c, col_n, col_q = st.columns([2, 3, 2])
+                with col_c:
+                    new_cat = st.text_input("カテゴリ", value=item['category'], key=f"cat_{i}")
+                with col_n:
+                    new_name = st.text_input("食材名", value=item['name'], key=f"name_{i}")
+                with col_q:
+                    new_q = st.text_input("数量", value=item['quantity'], key=f"qty_{i}")
+                
+                col_btn1, col_btn2 = st.columns(2)
+                with col_btn1:
+                    if st.button("💾 更新", key=f"update_inv_{i}"):
+                        st.session_state.inventory[i] = {
+                            "category": new_cat,
+                            "name": new_name,
+                            "quantity": new_q
+                        }
+                        st.success("更新しました！")
+                        st.rerun()
+                with col_btn2:
+                    if st.button("🗑️ 削除", key=f"del_inv_{i}"):
+                        st.session_state.inventory.pop(i)
+                        st.rerun()
+                st.markdown("---")
     else:
-        st.info("食材が登録されていません。上のフォームから追加してください。")
+        st.info("食材が登録されていません。")
 
-# --- Tab 2: ツール・家電設定 ---
+# --- Tab 2: キッチン用品（ツール設定・自動検索・編集） ---
 with tab2:
-    st.header("⚙️ おうちのツール・家電設定")
-    st.write("「ヘルシオ」などのオーブンや調理器具の特徴を登録できます。")
+    st.header("⚙️ キッチン用品")
+    st.write("おうちにある家電や調理器具を登録できます。")
     
-    new_tool_name = st.text_input("ツール・家電名", value="ヘルシオ")
-    new_tool_feature = st.text_area("特徴・得意なこと", value="過熱水蒸気でジューシーに焼くのが得意")
+    tool_input = st.text_input("キッチン用品名（例：ヘルシオ、バルミューダトースター、圧力鍋など）", value="ヘルシオ")
     
-    if st.button("💾 ツール情報を保存"):
-        if new_tool_name:
-            st.session_state.tools.append({
-                "name": new_tool_name,
-                "feature": new_tool_feature
-            })
-            st.success("ツール情報を保存しました！")
+    # 自動で特徴を検索・設定する関数
+    def search_tool_feature(name):
+        name_lower = name.lower()
+        if "ヘルシオ" in name_lower:
+            return "過熱水蒸気やウォーターオーブン機能で、油を使わないノンフライ調理やジューシーな焼き物・蒸し物が得意です。"
+        elif "バルミューダ" in name_lower or "トースター" in name_lower:
+            return "スチームテクノロジーと温度制御により、外はサクッと、中はもちもちの最高のトーストや焼き上がりが実現できます。"
+        elif "圧力鍋" in name_lower:
+            return "高温高圧で調理するため、固い根菜や塊肉も短時間でトロトロに柔らかく仕上がります。"
+        elif "ホットクック" in name_lower:
+            return "水なし・自動調理が得意で、かき混ぜながら食材の旨みを引き出した無水調理ができます。"
         else:
-            st.warning("ツール名を入力してください。")
+            return "毎日の調理を便利にしてくれる頼もしい調理器具です。"
+
+    # 入力に応じて自動設定される初期値（または編集値）
+    default_feature = search_tool_feature(tool_input)
+    tool_feature_input = st.text_area("特徴・得意なこと（自動入力されますが編集もできます）", value=default_feature)
+    
+    if st.button("💾 キッチン用品を保存"):
+        if tool_input:
+            st.session_state.tools.append({
+                "name": tool_input,
+                "feature": tool_feature_input
+            })
+            st.success("キッチン用品を保存しました！")
+        else:
+            st.warning("キッチン用品名を入力してください。")
             
     st.divider()
-    st.subheader("🔖 登録中のツール一覧")
-    for tool in st.session_state.tools:
+    st.subheader("おうちにあるキッチン用品")
+    for i, tool in enumerate(st.session_state.tools):
         st.markdown(f"- **{tool['name']}**: {tool['feature']}")
 
-# --- Tab 3: 献立提案 ---
+# --- Tab 3: なに食べよう？（献立提案・選択式＋自由入力・数量未登録ならカッコ非表示） ---
 with tab3:
-    st.header("🍲 今日の献立提案")
-    cooking_style = st.text_input("今日の気分・調理方法（例：時短、ヘルシー、ヘルシオでジューシーに）", value="おまかせ")
+    st.header("🍲 なに食べよう？")
     
+    # 気分・調理方法の選択肢
+    style_option = st.selectbox(
+        "今日の気分・調理方法を選んでね",
+        ["おまかせ", "時短・簡単", "ヘルシー・さっぱり", "がっつりスタミナ", "ヘルシオでジューシーに", "自由に入力する"]
+    )
+    
+    if style_option == "自由に入力する":
+        cooking_style = st.text_input("ご自身の気分・リクエストを入力してください")
+    else:
+        cooking_style = style_option
+        
     if st.button("✨ 献立を考えてもらう！"):
-        with st.spinner("AIが冷蔵庫の食材とツールを組み合わせて考えています..."):
-            inv_text = ", ".join([f"{i['name']} ({i['quantity']})" for i in st.session_state.inventory])
+        with st.spinner("うしさんが冷蔵庫の食材とキッチン用品から考えています..."):
+            # 数量が未登録の場合は（）を非表示にする整形
+            inv_formatted = []
+            for i in st.session_state.inventory:
+                if i['quantity'].strip():
+                    inv_formatted.append(f"{i['name']} ({i['quantity']})")
+                else:
+                    inv_formatted.append(f"{i['name']}")
+            
+            inv_text = ", ".join(inv_formatted)
             tools_text = ", ".join([f"{t['name']} ({t['feature']})" for t in st.session_state.tools])
             
             try:
@@ -166,43 +241,44 @@ with tab3:
                     model = genai.GenerativeModel("gemini-2.5-flash")
                     prompt = f"""
                     あなたは家庭の優秀な料理アシスタントです。
-                    以下の冷蔵庫の在庫食材と、利用できる調理ツールを使って、おすすめの献立（主菜・副菜など）を1つ提案してください。
+                    以下の冷蔵庫の在庫食材と、利用できるキッチン用品を使って、おすすめの献立（主菜・副菜など）を1つ提案してください。
                     
                     【冷蔵庫の在庫】
                     {inv_text if inv_text else "特になし"}
                     
-                    【調理ツール】
+                    【キッチン用品】
                     {tools_text if tools_text else "特になし"}
                     
                     【本日のリクエスト】
                     {cooking_style}
                     
-                    出力には、料理名、材料、簡単な作り方の手順、およびそのツールを活用するポイントを含めてください。
+                    出力には、料理名、材料、簡単な作り方の手順、およびそのキッチン用品を活用するポイントを含めてください。
                     """
                     response = model.generate_content(prompt)
-                    st.markdown("### 💡 AIからの献立提案")
-                    st.write(response.text)
+                    result_text = response.text
                 else:
-                    st.markdown("### 💡 AIからの献立提案（デモモード）")
-                    st.success("APIキーが未設定のため、サンプル提案を表示しています。")
-                    st.markdown(f"""
-                    **メニュー名：トマトと豚肉のヘルシオジューシー炒め**
-                    - **使った食材：** トマト ({next((i['quantity'] for i in st.session_state.inventory if i['name']=='トマト'), '3個')}), 豚肉スライス
-                    - **調理ツール：** ヘルシオ（過熱水蒸気）
-                    - **作り方：**
-                      1. 豚肉と切ったトマトを耐熱容器に入れます。
-                      2. ヘルシオの「まかせて調理（焼く）」または「炒め物コース」にセットします。
-                      3. 過熱水蒸気でジューシーに仕上がり完成です！
-                    """)
+                    # デモモード
+                    result_text = f"""**メニュー名：トマトと豚肉のジューシー炒め**
+- **使った食材：** トマト, 豚肉スライス
+- **キッチン用品：** ヘルシオ
+- **作り方：**
+  1. 豚肉と切ったトマトを耐熱容器に入れます。
+  2. ヘルシオの「まかせて調理」にセットします。
+  3. ジューシーに仕上がり完成です！"""
+                
+                # 履歴に保存
+                timestamp = datetime.now().strftime("%m/%d %H:%M")
+                st.session_state.history.insert(0, {"time": timestamp, "style": cooking_style, "content": result_text})
+                
+                st.markdown("### 💡 提案された献立")
+                st.markdown(result_text)
+                
             except Exception as e:
                 st.error(f"エラーが発生しました: {e}")
 
-# --- Tab 4: お気に入り ---
+# --- Tab 4: 履歴（過去生成した献立の見返し） ---
 with tab4:
-    st.header("⭐ お気に入りのレシピ")
-    st.write("保存したお気に入りの料理を見返せます。")
-    if st.session_state.favorites:
-        for fav in st.session_state.favorites:
-            st.markdown(f"- 🍳 **{fav}**")
-    else:
-        st.info("お気に入りはまだ登録されていません。")
+    st.header("📜 履歴")
+    st.write("過去に生成した献立の記録です。")
+    if st.session_state.history:
+        for idx, h in enumerate(st.session_state
