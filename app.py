@@ -8,7 +8,47 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- セッション状態の初期化（メモリ上の仮データ保存） ---
+# --- 北欧ナチュラル風デザインのCSS適用 ---
+st.markdown("""
+<style>
+    /* 全体の背景やフォントの雰囲気を柔らかく */
+    .stApp {
+        background-color: #FAF8F5; /* 温かみのあるオフホワイト */
+        color: #4A4A4A;
+    }
+    
+    /* 見出しの色や雰囲気 */
+    h1, h2, h3 {
+        color: #5C6B53; /* くすみグリーン */
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+    }
+    
+    /* ボタンを角丸で可愛い北欧風カラー（マスタード＆グリーン）にする */
+    .stButton > button {
+        background-color: #E29578; /* サーモンピンク・テラコッタ系 */
+        color: white;
+        border-radius: 20px; /* 角を丸く */
+        border: none;
+        padding: 0.5rem 1.5rem;
+        font-weight: bold;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        background-color: #D37A5C;
+        color: white;
+    }
+    
+    /* 入力欄（テキストボックス）の角を丸くすっきりさせる */
+    .stTextInput > div > div > input, .stTextArea > div > div > textarea {
+        border-radius: 12px;
+        border: 1px solid #E3DCD2;
+        background-color: #FFFFFF;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- セッション状態の初期化 ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
@@ -26,24 +66,24 @@ if "tools" not in st.session_state:
 if "favorites" not in st.session_state:
     st.session_state.favorites = []
 
-# --- パスワード認証機能 ---
+# --- パスワード認証画面 ---
 if not st.session_state.authenticated:
     st.title("🔒 クッキングエージェントへようこそ")
-    st.write("お二人専用のアプリです。下のボタンを押してログインしてください。")
+    st.write("お二人専用のキッチンアプリです。下のボタンを押して入室してください。")
     if st.button("🍳 アプリに入室する（お母様・あなた）"):
         st.session_state.authenticated = True
         st.rerun()
     st.stop()
 
-# --- メインアプリ画面（4つのタブに拡張） ---
+# --- メインアプリ画面（4つのタブ） ---
 st.title("🍳 おうちクッキングエージェント")
-st.write("冷蔵庫の食材やツールを管理して、ぴったりの献立をご提案します！")
+st.write("🌿 冷蔵庫の食材やツールを管理して、ぴったりの献立をご提案します！")
 
 tab1, tab2, tab3, tab4 = st.tabs(["🛒 食材の在庫", "⚙️ ツール設定", "🍲 献立提案", "⭐ お気に入り"])
 
 # --- Tab 1: 食材の在庫管理 ---
 with tab1:
-    st.header("冷蔵庫の食材を登録・編集する")
+    st.header("🛒 冷蔵庫の食材を登録・編集する")
     
     category = st.text_input("カテゴリ名（例：野菜、肉、調味料）", value="野菜")
     col1, col2 = st.columns(2)
@@ -52,7 +92,7 @@ with tab1:
     with col2:
         food_quantity = st.text_input("数量（例：1玉、1パック）", value="1つ")
         
-    if st.button("食材を追加する"):
+    if st.button("✨ 食材を追加する"):
         if food_name:
             st.session_state.inventory.append({
                 "category": category,
@@ -64,7 +104,7 @@ with tab1:
             st.warning("食材名を入力してください。")
             
     st.divider()
-    st.subheader("現在登録されている食材一覧")
+    st.subheader("📋 現在登録されている食材一覧")
     if st.session_state.inventory:
         for i, item in enumerate(st.session_state.inventory):
             c1, c2, c3 = st.columns([2, 3, 2])
@@ -78,13 +118,13 @@ with tab1:
 
 # --- Tab 2: ツール・家電設定 ---
 with tab2:
-    st.header("おうちのツール・家電設定")
+    st.header("⚙️ おうちのツール・家電設定")
     st.write("「ヘルシオ」などのオーブンや調理器具の特徴を登録できます。")
     
     new_tool_name = st.text_input("ツール・家電名", value="ヘルシオ")
     new_tool_feature = st.text_area("特徴・得意なこと", value="過熱水蒸気でジューシーに焼くのが得意")
     
-    if st.button("ツール情報を保存"):
+    if st.button("💾 ツール情報を保存"):
         if new_tool_name:
             st.session_state.tools.append({
                 "name": new_tool_name,
@@ -95,24 +135,21 @@ with tab2:
             st.warning("ツール名を入力してください。")
             
     st.divider()
-    st.subheader("登録中のツール一覧")
+    st.subheader("🔖 登録中のツール一覧")
     for tool in st.session_state.tools:
         st.markdown(f"- **{tool['name']}**: {tool['feature']}")
 
 # --- Tab 3: 献立提案 ---
 with tab3:
-    st.header("今日の献立提案")
+    st.header("🍲 今日の献立提案")
     cooking_style = st.text_input("今日の気分・調理方法（例：時短、ヘルシー、ヘルシオでジューシーに）", value="おまかせ")
     
-    if st.button("献立を考えてもらう！"):
+    if st.button("✨ 献立を考えてもらう！"):
         with st.spinner("AIが冷蔵庫の食材とツールを組み合わせて考えています..."):
-            # 食材とツールのリストをテキスト化
             inv_text = ", ".join([f"{i['name']} ({i['quantity']})" for i in st.session_state.inventory])
             tools_text = ", ".join([f"{t['name']} ({t['feature']})" for t in st.session_state.tools])
             
-            # Gemini APIキーが設定されている場合の処理（またはシミュレーション）
             try:
-                # Streamlit secretsからAPIキーを取得
                 api_key = st.secrets.get("GEMINI_API_KEY", "")
                 if api_key:
                     genai.configure(api_key=api_key)
@@ -136,7 +173,6 @@ with tab3:
                     st.markdown("### 💡 AIからの献立提案")
                     st.write(response.text)
                 else:
-                    # APIキーが未設定の場合のデモ提案（動く安心設計）
                     st.markdown("### 💡 AIからの献立提案（デモモード）")
                     st.success("APIキーが未設定のため、サンプル提案を表示しています。")
                     st.markdown(f"""
@@ -153,7 +189,7 @@ with tab3:
 
 # --- Tab 4: お気に入り ---
 with tab4:
-    st.header("お気に入りのレシピ")
+    st.header("⭐ お気に入りのレシピ")
     st.write("保存したお気に入りの料理を見返せます。")
     if st.session_state.favorites:
         for fav in st.session_state.favorites:
