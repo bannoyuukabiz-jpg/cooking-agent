@@ -140,14 +140,14 @@ st.write("今日はなに食べよう？🐮")
 col_t1, col_t2, col_t3, col_t4, col_t5 = st.columns(5)
 
 if "current_menu" not in st.session_state:
-    st.session_state.current_menu = "🛒 なにがあるかな？"
+    st.session_state.current_menu = "🍙 なにがあるかな？"
 
 with col_t1:
-    if st.button("🛒\n食材", key="tab_1"):
-        st.session_state.current_menu = "🛒 なにがあるかな？"
+    if st.button("🍙\n食材", key="tab_1"):
+        st.session_state.current_menu = "🍙 なにがあるかな？"
 with col_t2:
-    if st.button("⚙️\n用品", key="tab_2"):
-        st.session_state.current_menu = "⚙️ キッチン用品"
+    if st.button("🍳\nキッチン", key="tab_2"):
+        st.session_state.current_menu = "🍳 キッチン用品"
 with col_t3:
     if st.button("🍲\n献立", key="tab_3"):
         st.session_state.current_menu = "🍲 なに食べよう？"
@@ -155,7 +155,7 @@ with col_t4:
     if st.button("📜\n履歴", key="tab_4"):
         st.session_state.current_menu = "📜 履歴"
 with col_t5:
-    if st.button("⭐\nお気に", key="tab_5"):
+    if st.button("⭐\nお気に入り", key="tab_5"):
         st.session_state.current_menu = "⭐ お気に入り"
 
 st.markdown(f"**現在地： {st.session_state.current_menu}**")
@@ -174,8 +174,8 @@ categories = [
     "8. ❔️その他"
 ]
 
-if menu == "🛒 なにがあるかな？":
-    st.header("🛒 なにがあるかな？")
+if menu == "🍙 なにがあるかな？":
+    st.header("🍙 なにがあるかな？")
     st.write("冷蔵庫にある食材を登録しましょう！")
     
     c_key = st.session_state.form_counter
@@ -261,8 +261,8 @@ if menu == "🛒 なにがあるかな？":
     else:
         st.info("食材が登録されていません。")
 
-elif menu == "⚙️ キッチン用品":
-    st.header("⚙️ キッチン用品")
+elif menu == "🍳 キッチン用品":
+    st.header("🍳 キッチン用品")
     st.write("おうちにある家電や調理器具を登録できます。")
     
     tool_input = st.text_input("キッチン用品名（例：ヘルシオ、バルミューダトースター、圧力鍋など）", value="ヘルシオ")
