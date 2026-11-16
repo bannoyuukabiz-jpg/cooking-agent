@@ -208,4 +208,10 @@ if menu == "🛒 なにがあるかな？":
                         
                         # 編集・削除ボタン（縦積み・「更新」を「編集」に変更）
                         if st.button("💾 編集", key=f"update_inv_{i}"):
-                            st.session_state.inventory[i
+                            st.session_state.inventory[i] = {
+                                "category": item['category'], # カテゴリは維持
+                                "name": new_name,
+                                "quantity": new_q
+                            }
+                            st.success("更新しました！")
+                            st.rerun()
