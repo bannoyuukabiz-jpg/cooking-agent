@@ -169,3 +169,45 @@ with tab2:
     st.write("おうちにある家電や調理器具を登録できます。")
     
     tool_input = st.text_input("キッチン用品名（例：ヘルシオ、バルミューダトースター、圧力鍋など）", value="ヘルシオ")
+    
+    def search_tool_feature(name):
+        name_lower = name.lower()
+        if "ヘルシオ" in name_lower:
+            return "過熱水蒸気やウォーターオーブン機能で、油を使わないノンフライ調理やジューシーな焼き物・蒸し物が得意です。"
+        elif "バルミューダ" in name_lower or "トースター" in name_lower:
+            return "スチームテクノロジーと温度制御により、外はサクッと、中はもちもちの最高のトーストや焼き上がりが実現できます。"
+        elif "圧力鍋" in name_lower:
+            return "高温高圧で調理するため、固い根菜や塊肉も短時間でトロトロに柔らかく仕上がります。"
+        elif "ホットクック" in name_lower:
+            return "水なし・自動調理が得意で、かき混ぜながら食材の旨みを引き出した無水調理ができます。"
+        else:
+            return "毎日の調理を便利にしてくれる頼もしい調理器具です。"
+
+    default_feature = search_tool_feature(tool_input)
+    tool_feature_input = st.text_area("特徴・得意なこと（自動入力されますが編集もできます）", value=default_feature)
+    
+    if st.button("💾 キッチン用品を登録する"):
+        if tool_input:
+            st.session_state.tools.append({
+                "name": tool_input,
+                "feature": tool_feature_input
+            })
+            st.success("キッチン用品を登録しました！")
+            st.rerun()
+        else:
+            st.warning("キッチン用品名を入力してください。")
+            
+    st.divider()
+    st.subheader("おうちにあるキッチン用品")
+    if st.session_state.tools:
+        for i, tool in enumerate(st.session_state.tools):
+            with st.container():
+                st.markdown(f"**🍳 {tool['name']}**")
+                st.markdown(f"{tool['feature']}")
+                if st.button("🗑️ 削除", key=f"del_tool_{i}"):
+                    st.session_state.tools.pop(i)
+                    st.rerun()
+                st.markdown("---")
+    else:
+        st.info("キッチン用品が登録されていません
+                
