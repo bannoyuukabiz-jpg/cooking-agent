@@ -210,4 +210,3 @@ with tab2:
                 st.markdown("---")
     else:
         st.info("キッチン用品が登録されていません
-                
