@@ -89,14 +89,21 @@ if not st.session_state.authenticated:
         st.rerun()
     st.stop()
 
-# --- メインアプリ画面（スマホライクなタブ構成） ---
+# --- メインアプリ画面 ---
 st.title("🐮 うしのクッキング")
 st.write("今日はなに食べよう？🐮")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["🛒 なにがあるかな？", "⚙️ キッチン用品", "🍲 なに食べよう？", "📜 履歴", "⭐ お気に入り"])
+# タブの代わりにラジオボタンまたはselectboxを使うと、スマホでも絶対に表示が消えず確実に切り替えられます！
+menu = st.radio(
+    "メニューを選んでね",
+    ["🛒 なにがあるかな？", "⚙️ キッチン用品", "🍲 なに食べよう？", "📜 履歴", "⭐ お気に入り"],
+    horizontal=True
+)
 
-# --- Tab 1: なにがあるかな？ ---
-with tab1:
+st.divider()
+
+# --- 1. なにがあるかな？ ---
+if menu == "🛒 なにがあるかな？":
     st.header("🛒 なにがあるかな？")
     st.write("冷蔵庫にある食材を登録しましょう！")
     
@@ -155,3 +162,142 @@ with tab1:
                         }
                         st.success("更新しました！")
                         st.rerun()
+                with col_btn2:
+                    if st.button("🗑️ 削除", key=f"del_inv_{i}"):
+                        st.session_state.inventory.pop(i)
+                        st.rerun()
+                st.markdown("---")
+    else:
+        st.info("食材が登録されていません。")
+
+# --- 2. キッチン用品 ---
+elif menu == "⚙️ キッチン用品":
+    st.header("⚙️ キッチン用品")
+    st.write("おうちにある家電や調理器具を登録できます。")
+    
+    tool_input = st.text_input("キッチン用品名（例：ヘルシオ、バルミューダトースター、圧力鍋など）", value="ヘルシオ")
+    
+    def search_tool_feature(name):
+        name_lower = name.lower()
+        if "ヘルシオ" in name_lower:
+            return "過熱水蒸気やウォーターオーブン機能で、油を使わないノンフライ調理やジューシーな焼き物・蒸し物が得意です。"
+        elif "バルミューダ" in name_lower or "トースター" in name_lower:
+            return "スチームテクノロジーと温度制御により、外はサクッと、中はもちもちの最高のトーストや焼き上がりが実現できます。"
+        elif "圧力鍋" in name_lower:
+            return "高温高圧で調理するため、固い根菜や塊肉も短時間でトロトロに柔らかく仕上がります。"
+        elif "ホットクック" in name_lower:
+            return "水なし・自動調理が得意で、かき混ぜながら食材の旨みを引き出した無水調理ができます。"
+        else:
+            return "毎日の調理を便利にしてくれる頼もしい調理器具です。"
+
+    default_feature = search_tool_feature(tool_input)
+    tool_feature_input = st.text_area("特徴・得意なこと（自動入力されますが編集もできます）", value=default_feature)
+    
+    if st.button("💾 キッチン用品を登録する"):
+        if tool_input:
+            st.session_state.tools.append({
+                "name": tool_input,
+                "feature": tool_feature_input
+            })
+            st.success("キッチン用品を登録しました！")
+            st.rerun()
+        else:
+            st.warning("キッチン用品名を入力してください。")
+            
+    st.divider()
+    st.subheader("おうちにあるキッチン用品")
+    if st.session_state.tools:
+        for i, tool in enumerate(st.session_state.tools):
+            with st.container():
+                st.markdown(f"**🍳 {tool['name']}**")
+                st.markdown(f"{tool['feature']}")
+                if st.button("🗑️ 削除", key=f"del_tool_{i}"):
+                    st.session_state.tools.pop(i)
+                    st.rerun()
+                st.markdown("---")
+    else:
+        st.info("キッチン用品が登録されていません。")
+
+# --- 3. なに食べよう？ ---
+elif menu == "🍲 なに食べよう？":
+    st.header("🍲 なに食べよう？")
+    
+    style_option = st.selectbox(
+        "今日の気分・調理方法を選んでね",
+        ["おまかせ", "時短・簡単", "ヘルシー・さっぱり", "がっつりスタミナ", "ヘルシオでジューシーに", "自由に入力する"]
+    )
+    
+    if style_option == "自由に入力する":
+        cooking_style = st.text_input("ご自身の気分・リクエストを入力してください")
+    else:
+        cooking_style = style_option
+        
+    if st.button("✨ 献立を考えてもらう！"):
+        with st.spinner("うしさんが冷蔵庫の食材とキッチン用品から考えています..."):
+            inv_formatted = []
+            for i in st.session_state.inventory:
+                if i['quantity'].strip():
+                    inv_formatted.append(f"{i['name']} ({i['quantity']})")
+                else:
+                    inv_formatted.append(f"{i['name']}")
+            
+            inv_text = ", ".join(inv_formatted)
+            tools_text = ", ".join([f"{t['name']} ({t['feature']})" for t in st.session_state.tools])
+            
+            try:
+                api_key = st.secrets.get("GEMINI_API_KEY", "")
+                if api_key:
+                    genai.configure(api_key=api_key)
+                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    
+                    prompt = (
+                        "あなたは家庭の優秀な料理アシスタントです。\n"
+                        "以下の冷蔵庫の在庫食材と、利用できるキッチン用品を使って、おすすめの献立（主菜・副菜など）を1つ提案してください。\n\n"
+                        "【冷蔵庫の在庫】\n" + (inv_text if inv_text else "特になし") + "\n\n"
+                        "【キッチン用品】\n" + (tools_text if tools_text else "特になし") + "\n\n"
+                        "【本日のリクエスト】\n" + cooking_style + "\n\n"
+                        "出力には、料理名、材料、簡単な作り方の手順、およびそのキッチン用品を活用するポイントを含めてください。"
+                    )
+                    
+                    response = model.generate_content(prompt)
+                    result_text = response.text
+                else:
+                    result_text = (
+                        "**メニュー名：トマトと豚肉のジューシー炒め**\n"
+                        "- **使った食材：** トマト, 豚肉スライス\n"
+                        "- **キッチン用品：** ヘルシオ\n"
+                        "- **作り方：**\n"
+                        "  1. 豚肉と切ったトマトを耐熱容器に入れます。\n"
+                        "  2. ヘルシオの「まかせて調理」にセットします。\n"
+                        "  3. ジューシーに仕上がり完成です！"
+                    )
+                
+                timestamp = datetime.now().strftime("%m/%d %H:%M")
+                st.session_state.history.insert(0, {"time": timestamp, "style": cooking_style, "content": result_text})
+                
+                st.markdown("### 💡 提案された献立")
+                st.markdown(result_text)
+                
+            except Exception as e:
+                st.error(f"エラーが発生しました: {e}")
+
+# --- 4. 履歴 ---
+elif menu == "📜 履歴":
+    st.header("📜 履歴")
+    st.write("過去に生成した献立の記録です。")
+    if st.session_state.history:
+        for idx, h in enumerate(st.session_state.history):
+            with st.expander(f"🕒 {h['time']} - リクエスト: {h['style']}"):
+                st.markdown(h['content'])
+    else:
+        st.info("まだ生成された履歴はありません。「なに食べよう？」タブから献立を作ってみてね！")
+
+# --- 5. お気に入り ---
+elif menu == "⭐ お気に入り":
+    st.header("⭐ お気に入りのレシピ")
+    st.write("保存したお気に入りの料理を見返せます。")
+    if st.session_state.favorites:
+        for fav in st.session_state.favorites:
+            st.markdown(f"- 🍳 **{fav}**")
+    else:
+        st.info("お気に入りはまだ登録されていません。")
