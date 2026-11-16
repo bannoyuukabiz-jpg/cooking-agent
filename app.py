@@ -46,33 +46,31 @@ if not st.session_state.authenticated:
 st.title("🐮 うしのクッキング")
 st.write("今日はなに食べよう？🐮")
 
-col_t1, col_t2, col_t3, col_t4, col_t5 = st.columns(5)
+t1, t2, t3, t4, t5 = st.columns(5)
 if "current_menu" not in st.session_state: st.session_state.current_menu = "🛒 なにがあるかな？"
 
-with col_t1:
-    if st.button("🛒\n在庫", key="tab_1"): st.session_state.current_menu = "🛒 なにがあるかな？"
-with col_t2:
-    if st.button("⚙️\nキッチン", key="tab_2"): st.session_state.current_menu = "⚙️ キッチン用品"
-with col_t3:
-    if st.button("🍲\n献立", key="tab_3"): st.session_state.current_menu = "🍲 なに食べよう？"
-with col_t4:
-    if st.button("📜\n履歴", key="tab_4"): st.session_state.current_menu = "📜 履歴"
-with col_t5:
-    if st.button("⭐\nお気に入り", key="tab_5"): st.session_state.current_menu = "⭐ お気に入り"
+with t1:
+    if st.button("🛒\n在庫", key="b1"): st.session_state.current_menu = "🛒 なにがあるかな？"
+with t2:
+    if st.button("⚙️\nキッチン", key="b2"): st.session_state.current_menu = "⚙️ キッチン用品"
+with t3:
+    if st.button("🍲\n献立", key="b3"): st.session_state.current_menu = "🍲 なに食べよう？"
+with t4:
+    if st.button("📜\n履歴", key="b4"): st.session_state.current_menu = "📜 履歴"
+with t5:
+    if st.button("⭐\nお気に入り", key="b5"): st.session_state.current_menu = "⭐ お気に入り"
 
 st.divider()
+m = st.session_state.current_menu
 
-menu = st.session_state.current_menu
-
-if menu == "🛒 なにがあるかな？":
+if m == "🛒 なにがあるかな？":
     st.header("🛒 なにがあるかな？")
-    st.write("冷蔵庫にある食材を登録しましょう！")
-    food_name_input = st.text_input("食材名（例：キャベツ、豚肉など）")
-    food_qty_input = st.text_input("数量（例：1玉、200g ※未入力でもOK）")
+    fn = st.text_input("食材名（例：キャベツ等）")
+    fq = st.text_input("数量（例：1玉 ※未入力でもOK）")
     
-    def guess_category(name):
+    def guess_cat(name):
         n = name.lower()
-        if any(w in n for w in ["トマト", "キャベツ", "レタス", "玉ねぎ", "人参", "きゅうり", "野菜"]): return "野菜"
+        if any(w in n for w in ["トマト", "キャベツ", "レタス", "玉ねぎ", "人参", "野菜"]): return "野菜"
         elif any(w in n for w in ["豚", "鶏", "牛", "肉", "ベーコン"]): return "肉"
         elif any(w in n for w in ["鮭", "鯖", "えび", "魚"]): return "魚介"
         elif any(w in n for w in ["牛乳", "チーズ", "バター", "卵"]): return "乳製品・卵"
@@ -80,14 +78,17 @@ if menu == "🛒 なにがあるかな？":
         return "その他"
 
     if st.button("✨ 食材を追加する"):
-        if food_name_input:
-            cat = guess_category(food_name_input)
-            st.session_state.inventory.append({"category": cat, "name": food_name_input, "quantity": food_qty_input.strip()})
-            st.success(f"「{food_name_input}」を追加しました！（{cat}）")
-            st.rerun()
+        if fn:
+            cat = guess_cat(fn)
+            st.session_state.inventory.append({"category": cat, "name": fn, "quantity": fq.strip()})
+            st.success(f"「{fn}」を追加しました！"); st.rerun()
         else: st.warning("食材名を入力してください。")
             
     st.divider()
     st.subheader("おうちにある食材")
     if st.session_state.inventory:
-        for i, item in enumerate(st.session_
+        for i, item in enumerate(st.session_state.inventory):
+            c1, c2, c3 = st.columns([2, 3, 2])
+            with c1: nc = st.text_input("カテゴリ", value=item['category'], key=f"c_{i}")
+            with c2: nn = st.text_input("食材名", value=item['name'], key=f"n_{i}")
+            with c3: nq = st.text_input("数量", value=item['quantity'], key=f"q_{i}")
