@@ -212,7 +212,7 @@ if menu == "🛒 なにがあるかな？":
         "カテゴリ",
         categories,
         index=default_idx,
-        placeholder="カテゴリを選択または自動入力",
+        placeholder="カテゴリを選択",
         key=f"fcat_{c_key}"
     )
 
