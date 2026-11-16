@@ -29,7 +29,10 @@ st.markdown("""
 
 if "authenticated" not in st.session_state: st.session_state.authenticated = False
 if "inventory" not in st.session_state:
-    st.session_state.inventory = [{"category": "野菜", "name": "トマト", "quantity": "3個"}, {"category": "肉", "name": "豚肉スライス", "quantity": "200g"}]
+    st.session_state.inventory = [
+        {"category": "🥑野菜・果物", "name": "トマト", "quantity": "3個"}, 
+        {"category": "🍖肉類・畜産物", "name": "豚肉スライス", "quantity": "200g"}
+    ]
 if "tools" not in st.session_state:
     st.session_state.tools = [{"name": "ヘルシオ オーブンレンジ", "feature": "過熱水蒸気でノンフライ調理や蒸し焼きが得意"}]
 if "history" not in st.session_state: st.session_state.history = []
@@ -74,118 +77,82 @@ with t5:
 st.divider()
 m = st.session_state.current_menu
 
+# --- 1. 食材タブ ---
 if m == "🛒 食材":
     st.header("🛒 食材")
     st.write("冷蔵庫にある食材を登録しましょう！")
-    fn = st.text_input("食材名（例：キャベツ等）")
-    fq = st.text_input("数量（例：1玉 ※未入力でもOK）")
+    fn = st.text_input("食材名（例：米、キャベツ、豚肉など）")
+    fq = st.text_input("数量（例：1袋、200g ※未入力でもOK）")
     
+    # 指定された7つのカテゴリへの自動振り分けロジック
     def guess_cat(name):
         n = name.lower()
-        if any(w in n for w in ["トマト", "キャベツ", "レタス", "玉ねぎ", "人参", "野菜"]): return "野菜"
-        elif any(w in n for w in ["豚", "鶏", "牛", "肉", "ベーコン"]): return "肉"
-        elif any(w in n for w in ["鮭", "鯖", "えび", "魚"]): return "魚介"
-        elif any(w in n for w in ["牛乳", "チーズ", "バター", "卵"]): return "乳製品・卵"
-        elif any(w in n for w in ["醤油", "味噌", "砂糖", "塩", "油"]): return "調味料"
-        return "その他"
+        if any(w in n for w in ["米", "小麦粉", "パン", "パスタ", "うどん", "そば", "シリアル", "麺"]): return "🌾穀物・麺類・パン"
+        elif any(w in n for w in ["トマト", "キャベツ", "レタス", "玉ねぎ", "人参", "きゅうり", "じゃがいも", "果物", "バナナ", "りんご", "みかん", "野菜"]): return "🥑野菜・果物"
+        elif any(w in n for w in ["豚", "鶏", "牛", "肉", "ハム", "ソーセージ", "卵", "たまご"]): return "🍖肉類・畜産物"
+        elif any(w in n for w in ["鮭", "鯖", "えび", "魚", "あじ", "まぐろ", "カニ", "かまぼこ", "海苔", "わかめ"]): return "🐟️水産物・海藻"
+        elif any(w in n for w in ["牛乳", "チーズ", "ヨーグルト", "豆腐", "納豆", "油揚げ", "豆乳"]): return "🥛乳製品・大豆製品"
+        elif any(w in n for w in ["醤油", "味噌", "砂糖", "塩", "酢", "マヨネーズ", "油", "ケチャップ", "ソース"]): return "🧂調味料・油"
+        elif any(w in n for w in ["お菓子", "チョコレート", "スナック", "和菓子", "洋菓子", "アイス", "クッキー", "ケーキ"]): return "🍰お菓子・スイーツ"
+        return "🥑野菜・果物" # デフォルト
 
     if st.button("✨ 食材を追加する"):
         if fn:
             cat = guess_cat(fn)
             st.session_state.inventory.append({"category": cat, "name": fn, "quantity": fq.strip()})
-            st.success(f"「{fn}」を追加しました！"); st.rerun()
+            st.success(f"「{fn}」を【{cat}】に追加しました！"); st.rerun()
         else: st.warning("食材名を入力してください。")
             
     st.divider()
     st.subheader("おうちにある食材")
+    
     if st.session_state.inventory:
-        # カテゴリごとにグループ化して表示
-        categories = sorted(list(set(item['category'] for item in st.session_state.inventory)))
+        # 定義された7つのカテゴリの順番
+        all_categories = [
+            "🌾穀物・麺類・パン",
+            "🥑野菜・果物",
+            "🍖肉類・畜産物",
+            "🐟️水産物・海藻",
+            "🥛乳製品・大豆製品",
+            "🧂調味料・油",
+            "🍰お菓子・スイーツ"
+        ]
         
-        for cat in categories:
-            st.markdown(f"### 🥬 {cat}")
-            # 全体のインベントリから該当カテゴリのインデックスとアイテムを取得
-            for original_i, item in enumerate(st.session_state.inventory):
-                if item['category'] == cat:
-                    with st.container():
-                        col_c, col_n, col_q, col_btn = st.columns([2, 3, 2, 1.5])
-                        with col_c: nc = st.text_input("カテゴリ", value=item['category'], key=f"c_{original_i}")
-                        with col_n: nn = st.text_input("食材名", value=item['name'], key=f"n_{original_i}")
-                        with col_q: nq = st.text_input("数量", value=item['quantity'], key=f"q_{original_i}")
-                        
-                        # 更新ボタンと削除ボタンを縦積み
-                        with col_btn:
-                            st.write("") # 微調整用スペース
-                            if st.button("💾 更新", key=f"up_{original_i}"):
-                                st.session_state.inventory[original_i] = {"category": nc, "name": nn, "quantity": nq}
-                                st.success("更新！"); st.rerun()
-                            if st.button("🗑️ 削除", key=f"dl_{original_i}"):
-                                st.session_state.inventory.pop(original_i); st.rerun()
-                    st.markdown("---")
-    else: st.info("食材はありません。")
+        # 実際に登録されているカテゴリをフィルタリング（順番維持）
+        existing_cats = [c for c in all_categories if any(item['category'] == c for item in st.session_state.inventory)]
+        # 定義外のカテゴリがあれば最後に追加
+        other_cats = list(set(item['category'] for item in st.session_state.inventory if item['category'] not in all_categories))
+        display_cats = existing_cats + other_cats
+        
+        for idx, cat in enumerate(display_cats):
+            # カテゴリごとにプルダウン（expander）で開閉できるようにする
+            with st.expander(f"📁 {cat}", expanded=True):
+                for original_i, item in enumerate(st.session_state.inventory):
+                    if item['category'] == cat:
+                        with st.container():
+                            col_c, col_n, col_q, col_btn = st.columns([2.5, 3, 2, 1.5])
+                            with col_c: nc = st.text_input("カテゴリ", value=item['category'], key=f"c_{original_i}")
+                            with col_n: nn = st.text_input("食材名", value=item['name'], key=f"n_{original_i}")
+                            with col_q: nq = st.text_input("数量", value=item['quantity'], key=f"q_{original_i}")
+                            
+                            with col_btn:
+                                st.write("") # 位置調整
+                                if st.button("💾 更新", key=f"up_{original_i}"):
+                                    st.session_state.inventory[original_i] = {"category": nc, "name": nn, "quantity": nq}
+                                    st.success("更新しました！"); st.rerun()
+                                if st.button("🗑️ 削除", key=f"dl_{original_i}"):
+                                    st.session_state.inventory.pop(original_i); st.rerun()
+                        # カテゴリ内には区切り線を入れない仕様
+            
+            # カテゴリの間には薄い区切り線を入れる（最後のカテゴリ以外）
+            if idx < len(display_cats) - 1:
+                st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E5DDD5;'>", unsafe_allow_html=True)
+    else: 
+        st.info("食材が登録されていません。")
 
+# --- 2. キッチン用品タブ ---
 elif m == "⚙️ キッチン用品":
     st.header("⚙️ キッチン用品")
     ti = st.text_input("キッチン用品名", value="ヘルシオ")
     
-    def get_ft(name):
-        n = name.lower()
-        if "ヘルシオ" in n: return "過熱水蒸気やウォーターオーブン機能で、油を使わないノンフライ調理やジューシーな焼き物が得意です。"
-        elif "バルミューダ" in n: return "外はサクッと中はもちもちのトーストが焼けます。"
-        elif "圧力鍋" in n: return "根菜や塊肉も短時間で柔らかく仕上がります。"
-        return "便利な調理器具です。"
-
-    tfi = st.text_area("特徴・得意なこと", value=get_ft(ti))
-    if st.button("💾 キッチン用品を登録する"):
-        if ti:
-            st.session_state.tools.append({"name": ti, "feature": tfi})
-            st.success("登録しました！"); st.rerun()
-        else: st.warning("名前を入力してください。")
-            
-    st.divider()
-    st.subheader("おうちにあるキッチン用品")
-    if st.session_state.tools:
-        for i, tool in enumerate(st.session_state.tools):
-            st.markdown(f"**🍳 {tool['name']}**\n{tool['feature']}")
-            if st.button("🗑️ 削除", key=f"dt_{i}"):
-                st.session_state.tools.pop(i); st.rerun()
-            st.markdown("---")
-    else: st.info("用品はありません。")
-
-elif m == "🍲 なに食べよう？":
-    st.header("🍲 なに食べよう？")
-    so = st.selectbox("今日の気分を選んでね", ["おまかせ", "時短・簡単", "ヘルシー", "がっつりスタミナ", "ヘルシオでジューシーに", "自由に入力する"])
-    cs = st.text_input("リクエストを入力") if so == "自由に入力する" else so
-        
-    if st.button("✨ 献立を考えてもらう！"):
-        with st.spinner("うしさんが考えています..."):
-            it = ", ".join([f"{x['name']} ({x['quantity']})" if x['quantity'].strip() else x['name'] for x in st.session_state.inventory])
-            tt = ", ".join([f"{x['name']} ({x['feature']})" for x in st.session_state.tools])
-            try:
-                ak = st.secrets.get("GEMINI_API_KEY", "")
-                if ak:
-                    genai.configure(api_key=ak)
-                    model = genai.GenerativeModel("gemini-2.5-flash")
-                    res = model.generate_content(f"在庫: {it or 'なし'}\n用品: {tt or 'なし'}\nリクエスト: {cs}\n献立を1つ提案して。")
-                    txt = res.text
-                else:
-                    txt = "**メニュー：トマトと豚肉のジューシー炒め**\n- 材料: トマト, 豚肉\n- 作り方: 炒めるだけ！"
-                st.session_state.history.insert(0, {"time": datetime.now().strftime("%m/%d %H:%M"), "style": cs, "content": txt})
-                st.markdown("### 💡 提案された献立")
-                st.markdown(txt)
-            except Exception as e: st.error(f"エラー: {e}")
-
-elif m == "📜 履歴":
-    st.header("📜 履歴")
-    if st.session_state.history:
-        for idx, h in enumerate(st.session_state.history):
-            with st.expander(f"🕒 {h['time']} - {h['style']}"):
-                st.markdown(h['content'])
-    else: st.info("履歴はまだありません。")
-
-elif m == "⭐ お気に入り":
-    st.header("⭐ お気に入りのレシピ")
-    if st.session_state.favorites:
-        for fav in st.session_state.favorites:
-            st.markdown(f"- 🍳 **{fav}**")
-    else: st.info("お気に入りはありません。")
+    def
