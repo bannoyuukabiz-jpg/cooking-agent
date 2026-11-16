@@ -8,56 +8,94 @@ st.set_page_config(
     layout="centered"
 )
 
+# 北欧ナチュラル（サーモンピンク × くすみブルー × 明るい白）CSS
 st.markdown("""
 <style>
+    /* 全体の背景 */
     .stApp {
         background-color: #FAF8F5 !important;
         color: #2C3E2D !important;
     }
+    
+    /* 見出し（くすみブルーをアクセントに） */
     h1, h2, h3 {
-        color: #4A5D43 !important;
+        color: #3B7A9E !important;
         font-family: 'Helvetica Neue', Arial, sans-serif;
     }
-    label, .stTextInput label, .stTextArea label, p, span {
+    
+    /* すべてのテキスト・ラベルをはっきりした濃い色に固定 */
+    label, p, span, div, .stMarkdown {
         color: #2C3E2D !important;
-        font-weight: 500;
     }
+
+    /* ボタン（ポットのサーモンピンク） */
     .stButton > button {
-        background-color: #E29578 !important;
-        color: white !important;
+        background-color: #F4A498 !important;
+        color: #FFFFFF !important;
         border-radius: 20px !important;
         border: none !important;
-        padding: 0.5rem 1.5rem !important;
+        padding: 0.5rem 1.2rem !important;
         font-weight: bold !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        transition: all 0.3s ease;
+        box-shadow: 0 3px 6px rgba(244, 164, 152, 0.3);
+        transition: all 0.2s ease;
+    }
+    .stButton > button p, .stButton > button span {
+        color: #FFFFFF !important;
     }
     .stButton > button:hover {
-        background-color: #D37A5C !important;
-        color: white !important;
+        background-color: #E58B7D !important;
     }
-    .stTextInput input, textarea, div[data-baseweb="input"] > div, div[data-baseweb="textarea"] > div, div[data-baseweb="select"] > div, .stInfo {
+
+    /* 入力欄・テキストエリア・プルダウンを真っ白に強制固定 */
+    input, textarea, select,
+    div[data-baseweb="input"] > div,
+    div[data-baseweb="textarea"] > div,
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="base-input"] {
         background-color: #FFFFFF !important;
         color: #2C3E2D !important;
         border-radius: 12px !important;
-        border: 1px solid #D8CEC3 !important;
+        border: 1.5px solid #E2D9CE !important;
     }
-    div[data-baseweb="popover"], div[data-baseweb="menu"] {
+    
+    /* プルダウンの選択肢リスト */
+    ul[data-baseweb="menu"], div[data-baseweb="popover"] {
+        background-color: #FFFFFF !important;
+    }
+    li[role="option"] {
         background-color: #FFFFFF !important;
         color: #2C3E2D !important;
     }
-    .streamlit-expanderHeader {
+    li[role="option"]:hover {
+        background-color: #FDF0ED !important;
+    }
+
+    /* アコーディオン（st.expander）のヘッダーと中身を白く明るく固定 */
+    div[data-testid="stExpander"] {
         background-color: #FFFFFF !important;
+        border: 1.5px solid #E2D9CE !important;
+        border-radius: 14px !important;
+        overflow: hidden;
+    }
+    div[data-testid="stExpander"] summary {
+        background-color: #FDF4F2 !important; /* ほんのりサーモンピンクのヘッダー */
+        color: #2C3E2D !important;
+        padding: 0.75rem 1rem !important;
+    }
+    div[data-testid="stExpander"] summary:hover {
+        background-color: #FCE8E4 !important;
+    }
+    div[data-testid="stExpanderDetails"] {
+        background-color: #FFFFFF !important;
+        padding: 1rem !important;
+    }
+
+    /* st.info（お知らせ枠）の背景を優しいくすみブルー系に固定 */
+    div[data-testid="stAlert"] {
+        background-color: #EDF5F9 !important;
+        border: 1px solid #B8D8E8 !important;
         border-radius: 12px !important;
-        border: 1px solid #D8CEC3 !important;
         color: #2C3E2D !important;
-    }
-    div.streamlit-expanderContent {
-        background-color: #FFFFFF !important;
-        border: 1px solid #D8CEC3 !important;
-        border-top: none !important;
-        border-bottom-left-radius: 12px !important;
-        border-bottom-right-radius: 12px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -67,8 +105,8 @@ if "authenticated" not in st.session_state:
 
 if "inventory" not in st.session_state:
     st.session_state.inventory = [
-        {"category": "肉類・畜産物", "name": "豚肉スライス", "quantity": "200g"},
-        {"category": "野菜・果物", "name": "トマト", "quantity": "3個"},
+        {"category": "3. 🍖肉類・畜産物", "name": "豚肉スライス", "quantity": "200g"},
+        {"category": "2. 🥑野菜・果物", "name": "トマト", "quantity": "3個"},
     ]
 
 if "tools" not in st.session_state:
@@ -114,7 +152,7 @@ with col_t4:
     if st.button("📜\n履歴", key="tab_4"):
         st.session_state.current_menu = "📜 履歴"
 with col_t5:
-    if st.button("⭐\nお茶", key="tab_5"):
+    if st.button("⭐\nお気に", key="tab_5"):
         st.session_state.current_menu = "⭐ お気に入り"
 
 st.markdown(f"**現在地： {st.session_state.current_menu}**")
@@ -187,8 +225,8 @@ if menu == "🛒 なにがあるかな？":
                         with col_q:
                             new_q = st.text_input("数量", value=item['quantity'], key=f"qty_{i}")
                         
-                        # カテゴリ変更用セレクトボックス
-                        new_cat = st.selectbox("カテゴリ", categories, index=categories.index(item['category']), key=f"cat_{i}")
+                        default_idx = categories.index(item['category']) if item['category'] in categories else 0
+                        new_cat = st.selectbox("カテゴリ", categories, index=default_idx, key=f"cat_{i}")
                         
                         col_btn1, col_btn2 = st.columns(2)
                         with col_btn1:
@@ -204,12 +242,9 @@ if menu == "🛒 なにがあるかな？":
                             if st.button("🗑️ 削除", key=f"del_inv_{i}"):
                                 st.session_state.inventory.pop(i)
                                 st.rerun()
-                        st.markdown("")
+                        st.markdown("---")
                 else:
                     st.info("登録されている食材はありません。")
-            
-            if idx < len(categories) - 1:
-                st.markdown("<hr style='margin: 15px 0; border: none; border-top: 1px solid #E5D9C5;'>", unsafe_allow_html=True)
     else:
         st.info("食材が登録されていません。")
 
