@@ -8,27 +8,20 @@ st.set_page_config(
     layout="centered"
 )
 
-# 北欧ナチュラル（サーモンピンク × くすみブルー × 明るい白）CSS
+# 北欧ナチュラル風デザインのCSS
 st.markdown("""
 <style>
-    /* 全体の背景 */
     .stApp {
         background-color: #FAF8F5 !important;
         color: #2C3E2D !important;
     }
-    
-    /* 見出し（くすみブルーをアクセントに） */
     h1, h2, h3 {
         color: #3B7A9E !important;
         font-family: 'Helvetica Neue', Arial, sans-serif;
     }
-    
-    /* すべてのテキスト・ラベルをはっきりした濃い色に固定 */
     label, p, span, div, .stMarkdown {
         color: #2C3E2D !important;
     }
-
-    /* ボタン（ポットのサーモンピンク） */
     .stButton > button {
         background-color: #F4A498 !important;
         color: #FFFFFF !important;
@@ -45,8 +38,6 @@ st.markdown("""
     .stButton > button:hover {
         background-color: #E58B7D !important;
     }
-
-    /* 入力欄・テキストエリア・プルダウンを真っ白に強制固定 */
     input, textarea, select,
     div[data-baseweb="input"] > div,
     div[data-baseweb="textarea"] > div,
@@ -57,8 +48,6 @@ st.markdown("""
         border-radius: 12px !important;
         border: 1.5px solid #E2D9CE !important;
     }
-    
-    /* プルダウンの選択肢リスト */
     ul[data-baseweb="menu"], div[data-baseweb="popover"] {
         background-color: #FFFFFF !important;
     }
@@ -69,8 +58,6 @@ st.markdown("""
     li[role="option"]:hover {
         background-color: #FDF0ED !important;
     }
-
-    /* アコーディオン（st.expander）のヘッダーと中身を白く明るく固定 */
     div[data-testid="stExpander"] {
         background-color: #FFFFFF !important;
         border: 1.5px solid #E2D9CE !important;
@@ -78,7 +65,7 @@ st.markdown("""
         overflow: hidden;
     }
     div[data-testid="stExpander"] summary {
-        background-color: #FDF4F2 !important; /* ほんのりサーモンピンクのヘッダー */
+        background-color: #FDF4F2 !important;
         color: #2C3E2D !important;
         padding: 0.75rem 1rem !important;
     }
@@ -89,8 +76,6 @@ st.markdown("""
         background-color: #FFFFFF !important;
         padding: 1rem !important;
     }
-
-    /* st.info（お知らせ枠）の背景を優しいくすみブルー系に固定 */
     div[data-testid="stAlert"] {
         background-color: #EDF5F9 !important;
         border: 1px solid #B8D8E8 !important;
@@ -140,7 +125,7 @@ if "current_menu" not in st.session_state:
     st.session_state.current_menu = "🛒 なにがあるかな？"
 
 with col_t1:
-    if st.button("🛒\n在庫", key="tab_1"):
+    if st.button("🛒\n食材", key="tab_1"):
         st.session_state.current_menu = "🛒 なにがあるかな？"
 with col_t2:
     if st.button("⚙️\n用品", key="tab_2"):
@@ -194,7 +179,7 @@ if menu == "🛒 なにがあるかな？":
                 "name": food_name_input,
                 "quantity": food_qty_input.strip()
             })
-            st.success(f"「{food_name_input}」を登録しました！（自動分類：{auto_cat}）")
+            st.toast(f"「{food_name_input}」を登録しました！", icon="✨")
             st.rerun()
         else:
             st.warning("食材名を入力してください。")
@@ -219,17 +204,16 @@ if menu == "🛒 なにがあるかな？":
             with st.expander(f"{cat_name} ({len(cat_items)}件)", expanded=True):
                 if cat_items:
                     for i, item in cat_items:
+                        # カテゴリ、食材名、数量、更新ボタン、削除ボタンを整理
+                        new_cat = st.selectbox("カテゴリ", categories, index=categories.index(item['category']), key=f"cat_{i}")
                         col_n, col_q = st.columns([3, 2])
                         with col_n:
                             new_name = st.text_input("食材名", value=item['name'], key=f"name_{i}")
                         with col_q:
                             new_q = st.text_input("数量", value=item['quantity'], key=f"qty_{i}")
                         
-                        default_idx = categories.index(item['category']) if item['category'] in categories else 0
-                        new_cat = st.selectbox("カテゴリ", categories, index=default_idx, key=f"cat_{i}")
-                        
-                        col_btn1, col_btn2 = st.columns(2)
-                        with col_btn1:
+                        col_b1, col_b2 = st.columns(2)
+                        with col_b1:
                             if st.button("💾 更新", key=f"update_inv_{i}"):
                                 st.session_state.inventory[i] = {
                                     "category": new_cat,
@@ -238,13 +222,17 @@ if menu == "🛒 なにがあるかな？":
                                 }
                                 st.success("更新しました！")
                                 st.rerun()
-                        with col_btn2:
+                        with col_b2:
                             if st.button("🗑️ 削除", key=f"del_inv_{i}"):
                                 st.session_state.inventory.pop(i)
                                 st.rerun()
-                        st.markdown("---")
+                        st.markdown("")
                 else:
                     st.info("登録されている食材はありません。")
+            
+            # カテゴリの間には薄い区切り線を入れるがカテゴリ内には入れない
+            if idx < len(categories) - 1:
+                st.markdown("<hr style='margin: 15px 0; border: none; border-top: 1px solid #E2D9CE;'>", unsafe_allow_html=True)
     else:
         st.info("食材が登録されていません。")
 
@@ -339,39 +327,4 @@ elif menu == "🍲 なに食べよう？":
                     result_text = response.text
                 else:
                     result_text = (
-                        "**メニュー名：トマトと豚肉のジューシー炒め**\n"
-                        "- **使った食材：** トマト, 豚肉スライス\n"
-                        "- **キッチン用品：** ヘルシオ\n"
-                        "- **作り方：**\n"
-                        "  1. 豚肉と切ったトマトを耐熱容器に入れます。\n"
-                        "  2. ヘルシオの「まかせて調理」にセットします。\n"
-                        "  3. ジューシーに仕上がり完成です！"
-                    )
-                
-                timestamp = datetime.now().strftime("%m/%d %H:%M")
-                st.session_state.history.insert(0, {"time": timestamp, "style": cooking_style, "content": result_text})
-                
-                st.markdown("### 💡 提案された献立")
-                st.markdown(result_text)
-                
-            except Exception as e:
-                st.error(f"エラーが発生しました: {e}")
-
-elif menu == "📜 履歴":
-    st.header("📜 履歴")
-    st.write("過去に生成した献立の記録です。")
-    if st.session_state.history:
-        for idx, h in enumerate(st.session_state.history):
-            with st.expander(f"🕒 {h['time']} - リクエスト: {h['style']}"):
-                st.markdown(h['content'])
-    else:
-        st.info("まだ生成された履歴はありません。「なに食べよう？」から献立を作ってみてね！")
-
-elif menu == "⭐ お気に入り":
-    st.header("⭐ お気に入りのレシピ")
-    st.write("保存したお気に入りの料理を見返せます。")
-    if st.session_state.favorites:
-        for fav in st.session_state.favorites:
-            st.markdown(f"- 🍳 **{fav}**")
-    else:
-        st.info("お気に入りはまだ登録されていません。")
+                        "**メニュー名：トマトと豚肉のジューシー炒め
