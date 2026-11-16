@@ -12,8 +12,9 @@ st.markdown("""
     .stButton > button {
         background-color: #E29578 !important; color: white !important;
         border-radius: 20px !important; border: none !important;
-        padding: 0.5rem 1.5rem !important; font-weight: bold !important;
+        padding: 0.4rem 1rem !important; font-weight: bold !important;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s ease;
+        width: 100%;
     }
     .stButton > button:hover { background-color: #D37A5C !important; color: white !important; }
     .stTextInput input, textarea, div[data-baseweb="input"] > div, div[data-baseweb="textarea"] > div, div[data-baseweb="select"] > div, .stInfo {
@@ -47,11 +48,11 @@ st.title("🐮 うしのクッキング")
 st.write("今日はなに食べよう？🐮")
 
 t1, t2, t3, t4, t5 = st.columns(5)
-if "current_menu" not in st.session_state: st.session_state.current_menu = "🛒 なにがあるかな？"
+if "current_menu" not in st.session_state: st.session_state.current_menu = "🛒 食材"
 
 with t1:
-    if st.button("🛒\n在庫", key="b1"):
-        st.session_state.current_menu = "🛒 なにがあるかな？"
+    if st.button("🥕\n食材", key="b1"):
+        st.session_state.current_menu = "🛒 食材"
         st.rerun()
 with t2:
     if st.button("⚙️\nキッチン", key="b2"):
@@ -73,8 +74,9 @@ with t5:
 st.divider()
 m = st.session_state.current_menu
 
-if m == "🛒 なにがあるかな？":
-    st.header("🛒 なにがあるかな？")
+if m == "🛒 食材":
+    st.header("🛒 食材")
+    st.write("冷蔵庫にある食材を登録しましょう！")
     fn = st.text_input("食材名（例：キャベツ等）")
     fq = st.text_input("数量（例：1玉 ※未入力でもOK）")
     
@@ -97,20 +99,29 @@ if m == "🛒 なにがあるかな？":
     st.divider()
     st.subheader("おうちにある食材")
     if st.session_state.inventory:
-        for i, item in enumerate(st.session_state.inventory):
-            c1, c2, c3 = st.columns([2, 3, 2])
-            with c1: nc = st.text_input("カテゴリ", value=item['category'], key=f"c_{i}")
-            with c2: nn = st.text_input("食材名", value=item['name'], key=f"n_{i}")
-            with c3: nq = st.text_input("数量", value=item['quantity'], key=f"q_{i}")
-            b_u, b_d = st.columns(2)
-            with b_u:
-                if st.button("💾 更新", key=f"up_{i}"):
-                    st.session_state.inventory[i] = {"category": nc, "name": nn, "quantity": nq}
-                    st.success("更新！"); st.rerun()
-            with b_d:
-                if st.button("🗑️ 削除", key=f"dl_{i}"):
-                    st.session_state.inventory.pop(i); st.rerun()
-            st.markdown("---")
+        # カテゴリごとにグループ化して表示
+        categories = sorted(list(set(item['category'] for item in st.session_state.inventory)))
+        
+        for cat in categories:
+            st.markdown(f"### 🥬 {cat}")
+            # 全体のインベントリから該当カテゴリのインデックスとアイテムを取得
+            for original_i, item in enumerate(st.session_state.inventory):
+                if item['category'] == cat:
+                    with st.container():
+                        col_c, col_n, col_q, col_btn = st.columns([2, 3, 2, 1.5])
+                        with col_c: nc = st.text_input("カテゴリ", value=item['category'], key=f"c_{original_i}")
+                        with col_n: nn = st.text_input("食材名", value=item['name'], key=f"n_{original_i}")
+                        with col_q: nq = st.text_input("数量", value=item['quantity'], key=f"q_{original_i}")
+                        
+                        # 更新ボタンと削除ボタンを縦積み
+                        with col_btn:
+                            st.write("") # 微調整用スペース
+                            if st.button("💾 更新", key=f"up_{original_i}"):
+                                st.session_state.inventory[original_i] = {"category": nc, "name": nn, "quantity": nq}
+                                st.success("更新！"); st.rerun()
+                            if st.button("🗑️ 削除", key=f"dl_{original_i}"):
+                                st.session_state.inventory.pop(original_i); st.rerun()
+                    st.markdown("---")
     else: st.info("食材はありません。")
 
 elif m == "⚙️ キッチン用品":
@@ -119,7 +130,7 @@ elif m == "⚙️ キッチン用品":
     
     def get_ft(name):
         n = name.lower()
-        if "ヘルシオ" in n: return "過熱水蒸気でノンフライ調理やジューシーな焼き物が得意です。"
+        if "ヘルシオ" in n: return "過熱水蒸気やウォーターオーブン機能で、油を使わないノンフライ調理やジューシーな焼き物が得意です。"
         elif "バルミューダ" in n: return "外はサクッと中はもちもちのトーストが焼けます。"
         elif "圧力鍋" in n: return "根菜や塊肉も短時間で柔らかく仕上がります。"
         return "便利な調理器具です。"
