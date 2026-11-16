@@ -8,13 +8,13 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- 北欧ナチュラル風デザインのCSS適用（文字色をくっきり調整） ---
+# --- 北欧ナチュラル風デザインのCSS適用（テキストエリアの背景も明るく調整） ---
 st.markdown("""
 <style>
     /* 全体の背景と文字色 */
     .stApp {
         background-color: #FAF8F5; /* 温かみのあるオフホワイト */
-        color: #2C3E2D; /* 文字を濃いナチュラルグリーンにして読みやすく */
+        color: #2C3E2D; /* 濃いナチュラルグリーン */
     }
     
     /* 見出しの色や雰囲気 */
@@ -45,12 +45,12 @@ st.markdown("""
         color: white;
     }
     
-    /* 入力欄（テキストボックス）をすっきり清潔感のある白に */
+    /* 入力欄（テキストボックス・テキストエリア）の背景をすっきり清潔感のある白に */
     .stTextInput > div > div > input, .stTextArea > div > div > textarea {
         border-radius: 12px;
         border: 1px solid #D8CEC3;
-        background-color: #FFFFFF;
-        color: #2C3E2D;
+        background-color: #FFFFFF !important;
+        color: #2C3E2D !important;
     }
 </style>
 """, unsafe_allow_html=True)
