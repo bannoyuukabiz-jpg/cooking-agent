@@ -100,11 +100,9 @@ with tab1:
     st.header("🛒 なにかある？")
     st.write("冷蔵庫にある食材を登録しましょう！")
     
-    # 入力フォーム
     food_name_input = st.text_input("食材名（例：キャベツ、豚肉、牛乳など）")
     food_qty_input = st.text_input("数量（例：1玉、200g ※未入力でもOK）")
     
-    # 自動カテゴリ判定のロジック
     def guess_category(name):
         name_lower = name.lower()
         if any(w in name_lower for w in ["トマト", "キャベツ", "レタス", "玉ねぎ", "人参", "きゅうり", "じゃがいも", "野菜", "ネギ"]):
@@ -139,7 +137,6 @@ with tab1:
     if st.session_state.inventory:
         for i, item in enumerate(st.session_state.inventory):
             with st.container():
-                # スマホでも見やすいように編集フォームを展開式または横並びに
                 col_c, col_n, col_q = st.columns([2, 3, 2])
                 with col_c:
                     new_cat = st.text_input("カテゴリ", value=item['category'], key=f"cat_{i}")
@@ -173,7 +170,6 @@ with tab2:
     
     tool_input = st.text_input("キッチン用品名（例：ヘルシオ、バルミューダトースター、圧力鍋など）", value="ヘルシオ")
     
-    # 自動で特徴を検索・設定する関数
     def search_tool_feature(name):
         name_lower = name.lower()
         if "ヘルシオ" in name_lower:
@@ -187,98 +183,5 @@ with tab2:
         else:
             return "毎日の調理を便利にしてくれる頼もしい調理器具です。"
 
-    # 入力に応じて自動設定される初期値（または編集値）
     default_feature = search_tool_feature(tool_input)
     tool_feature_input = st.text_area("特徴・得意なこと（自動入力されますが編集もできます）", value=default_feature)
-    
-    if st.button("💾 キッチン用品を保存"):
-        if tool_input:
-            st.session_state.tools.append({
-                "name": tool_input,
-                "feature": tool_feature_input
-            })
-            st.success("キッチン用品を保存しました！")
-        else:
-            st.warning("キッチン用品名を入力してください。")
-            
-    st.divider()
-    st.subheader("おうちにあるキッチン用品")
-    for i, tool in enumerate(st.session_state.tools):
-        st.markdown(f"- **{tool['name']}**: {tool['feature']}")
-
-# --- Tab 3: なに食べよう？（献立提案・選択式＋自由入力・数量未登録ならカッコ非表示） ---
-with tab3:
-    st.header("🍲 なに食べよう？")
-    
-    # 気分・調理方法の選択肢
-    style_option = st.selectbox(
-        "今日の気分・調理方法を選んでね",
-        ["おまかせ", "時短・簡単", "ヘルシー・さっぱり", "がっつりスタミナ", "ヘルシオでジューシーに", "自由に入力する"]
-    )
-    
-    if style_option == "自由に入力する":
-        cooking_style = st.text_input("ご自身の気分・リクエストを入力してください")
-    else:
-        cooking_style = style_option
-        
-    if st.button("✨ 献立を考えてもらう！"):
-        with st.spinner("うしさんが冷蔵庫の食材とキッチン用品から考えています..."):
-            # 数量が未登録の場合は（）を非表示にする整形
-            inv_formatted = []
-            for i in st.session_state.inventory:
-                if i['quantity'].strip():
-                    inv_formatted.append(f"{i['name']} ({i['quantity']})")
-                else:
-                    inv_formatted.append(f"{i['name']}")
-            
-            inv_text = ", ".join(inv_formatted)
-            tools_text = ", ".join([f"{t['name']} ({t['feature']})" for t in st.session_state.tools])
-            
-            try:
-                api_key = st.secrets.get("GEMINI_API_KEY", "")
-                if api_key:
-                    genai.configure(api_key=api_key)
-                    model = genai.GenerativeModel("gemini-2.5-flash")
-                    prompt = f"""
-                    あなたは家庭の優秀な料理アシスタントです。
-                    以下の冷蔵庫の在庫食材と、利用できるキッチン用品を使って、おすすめの献立（主菜・副菜など）を1つ提案してください。
-                    
-                    【冷蔵庫の在庫】
-                    {inv_text if inv_text else "特になし"}
-                    
-                    【キッチン用品】
-                    {tools_text if tools_text else "特になし"}
-                    
-                    【本日のリクエスト】
-                    {cooking_style}
-                    
-                    出力には、料理名、材料、簡単な作り方の手順、およびそのキッチン用品を活用するポイントを含めてください。
-                    """
-                    response = model.generate_content(prompt)
-                    result_text = response.text
-                else:
-                    # デモモード
-                    result_text = f"""**メニュー名：トマトと豚肉のジューシー炒め**
-- **使った食材：** トマト, 豚肉スライス
-- **キッチン用品：** ヘルシオ
-- **作り方：**
-  1. 豚肉と切ったトマトを耐熱容器に入れます。
-  2. ヘルシオの「まかせて調理」にセットします。
-  3. ジューシーに仕上がり完成です！"""
-                
-                # 履歴に保存
-                timestamp = datetime.now().strftime("%m/%d %H:%M")
-                st.session_state.history.insert(0, {"time": timestamp, "style": cooking_style, "content": result_text})
-                
-                st.markdown("### 💡 提案された献立")
-                st.markdown(result_text)
-                
-            except Exception as e:
-                st.error(f"エラーが発生しました: {e}")
-
-# --- Tab 4: 履歴（過去生成した献立の見返し） ---
-with tab4:
-    st.header("📜 履歴")
-    st.write("過去に生成した献立の記録です。")
-    if st.session_state.history:
-        for idx, h in enumerate(st.session_state
