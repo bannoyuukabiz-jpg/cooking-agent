@@ -163,9 +163,6 @@ if menu == "🛒 なにがあるかな？":
     food_name_input = st.text_input("食材名（例：キャベツ、豚肉、牛乳など）")
     food_qty_input = st.text_input("数量（例：1玉、200g ※未入力でもOK）")
     
-    # カテゴリのセレクトボックス（デフォルト未入力風に「選択してください」または自動判定、今回は「❔️その他」を含むリストから自動選択、または手動選択）
     def guess_category(name):
         n = name.lower()
-        if any(w in n for w in ["米", "小麦粉", "パン", "パスタ", "うどん", "そば", "シリアル"]):
-            return "1. 🌾穀物・麺類・パン"
-        elif any(w in n for w in ["トマト", "キャベ
+        if any(w in n for w in ["米", "
