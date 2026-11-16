@@ -8,22 +8,28 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- 北欧ナチュラル風デザインのCSS適用 ---
+# --- 北欧ナチュラル風デザインのCSS適用（文字色をくっきり調整） ---
 st.markdown("""
 <style>
-    /* 全体の背景やフォントの雰囲気を柔らかく */
+    /* 全体の背景と文字色 */
     .stApp {
         background-color: #FAF8F5; /* 温かみのあるオフホワイト */
-        color: #4A4A4A;
+        color: #2C3E2D; /* 文字を濃いナチュラルグリーンにして読みやすく */
     }
     
     /* 見出しの色や雰囲気 */
     h1, h2, h3 {
-        color: #5C6B53; /* くすみグリーン */
+        color: #4A5D43; /* 深みのあるくすみグリーン */
         font-family: 'Helvetica Neue', Arial, sans-serif;
     }
     
-    /* ボタンを角丸で可愛い北欧風カラー（マスタード＆グリーン）にする */
+    /* 入力欄の上のラベル（タイトル）の文字をくっきりと見やすくする */
+    label, .stTextInput label, .stTextArea label, p {
+        color: #2C3E2D !important;
+        font-weight: 500;
+    }
+    
+    /* ボタンを角丸で可愛い北欧風カラーにする */
     .stButton > button {
         background-color: #E29578; /* サーモンピンク・テラコッタ系 */
         color: white;
@@ -39,11 +45,12 @@ st.markdown("""
         color: white;
     }
     
-    /* 入力欄（テキストボックス）の角を丸くすっきりさせる */
+    /* 入力欄（テキストボックス）をすっきり清潔感のある白に */
     .stTextInput > div > div > input, .stTextArea > div > div > textarea {
         border-radius: 12px;
-        border: 1px solid #E3DCD2;
+        border: 1px solid #D8CEC3;
         background-color: #FFFFFF;
+        color: #2C3E2D;
     }
 </style>
 """, unsafe_allow_html=True)
