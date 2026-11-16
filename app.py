@@ -8,43 +8,45 @@ st.set_page_config(
     layout="centered"
 )
 
-# 北欧ナチュラル風デザインのCSS（ボタンが消えないよう表示を確実に保証）
+# 北欧ナチュラル（サーモンピンク × くすみブルー × 明るい白）CSS
 st.markdown("""
 <style>
+    /* 全体の背景 */
     .stApp {
         background-color: #FAF8F5 !important;
         color: #2C3E2D !important;
     }
+    
+    /* 見出し（くすみブルーをアクセントに） */
     h1, h2, h3 {
         color: #3B7A9E !important;
         font-family: 'Helvetica Neue', Arial, sans-serif;
     }
+    
+    /* すべてのテキスト・ラベルをはっきりした濃い色に固定 */
     label, p, span, div, .stMarkdown {
         color: #2C3E2D !important;
     }
-    /* ボタンのデザイン（必ず表示されるように設定） */
-    div.stButton > button {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        background-color: #E29578 !important;
+
+    /* ボタン（ポットのサーモンピンク） */
+    .stButton > button {
+        background-color: #F4A498 !important;
         color: #FFFFFF !important;
         border-radius: 20px !important;
         border: none !important;
-        padding: 0.6rem 1.4rem !important;
+        padding: 0.5rem 1.2rem !important;
         font-weight: bold !important;
-        font-size: 1rem !important;
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1) !important;
-        opacity: 1 !important;
-        visibility: visible !important;
+        box-shadow: 0 3px 6px rgba(244, 164, 152, 0.3);
+        transition: all 0.2s ease;
     }
-    div.stButton > button p, div.stButton > button span {
+    .stButton > button p, .stButton > button span {
         color: #FFFFFF !important;
     }
-    div.stButton > button:hover {
-        background-color: #D37A5C !important;
+    .stButton > button:hover {
+        background-color: #E58B7D !important;
     }
-    /* 入力欄・セレクトボックスの背景を白に統一 */
+
+    /* 入力欄・テキストエリア・プルダウンを真っ白に強制固定 */
     input, textarea, select,
     div[data-baseweb="input"] > div,
     div[data-baseweb="textarea"] > div,
@@ -55,6 +57,8 @@ st.markdown("""
         border-radius: 12px !important;
         border: 1.5px solid #E2D9CE !important;
     }
+    
+    /* プルダウンの選択肢リスト */
     ul[data-baseweb="menu"], div[data-baseweb="popover"] {
         background-color: #FFFFFF !important;
     }
@@ -65,7 +69,8 @@ st.markdown("""
     li[role="option"]:hover {
         background-color: #FDF0ED !important;
     }
-    /* アコーディオン（Expander） */
+
+    /* アコーディオン（st.expander）のヘッダーと中身を白く明るく固定 */
     div[data-testid="stExpander"] {
         background-color: #FFFFFF !important;
         border: 1.5px solid #E2D9CE !important;
@@ -73,14 +78,19 @@ st.markdown("""
         overflow: hidden;
     }
     div[data-testid="stExpander"] summary {
-        background-color: #FDF4F2 !important;
+        background-color: #FDF4F2 !important; /* ほんのりサーモンピンクのヘッダー */
         color: #2C3E2D !important;
         padding: 0.75rem 1rem !important;
+    }
+    div[data-testid="stExpander"] summary:hover {
+        background-color: #FCE8E4 !important;
     }
     div[data-testid="stExpanderDetails"] {
         background-color: #FFFFFF !important;
         padding: 1rem !important;
     }
+
+    /* st.info（お知らせ枠）の背景を優しいくすみブルー系に固定 */
     div[data-testid="stAlert"] {
         background-color: #EDF5F9 !important;
         border: 1px solid #B8D8E8 !important;
@@ -116,16 +126,14 @@ if "favorites" not in st.session_state:
         "キャベツの温野菜サラダ（ヘルシオ使用）"
     ]
 
-# --- ログイン画面 ---
 if not st.session_state.authenticated:
     st.title("🔒 ログイン")
     st.write("お二人専用のキッチンアプリです。下のボタンを押して入室してください。")
-    if st.button("🐮 うしのクッキングに入室する", key="login_btn"):
+    if st.button("🐮 うしのクッキングに入室する"):
         st.session_state.authenticated = True
         st.rerun()
     st.stop()
 
-# --- メイン画面 ---
 st.title("🐮 うしのクッキング")
 st.write("今日はなに食べよう？🐮")
 
@@ -138,7 +146,7 @@ with col_t1:
     if st.button("🛒\n食材", key="tab_1"):
         st.session_state.current_menu = "🛒 なにがあるかな？"
 with col_t2:
-    if st.button("⚙️\nキッチン", key="tab_2"):
+    if st.button("⚙️\n用品", key="tab_2"):
         st.session_state.current_menu = "⚙️ キッチン用品"
 with col_t3:
     if st.button("🍲\n献立", key="tab_3"):
@@ -147,9 +155,10 @@ with col_t4:
     if st.button("📜\n履歴", key="tab_4"):
         st.session_state.current_menu = "📜 履歴"
 with col_t5:
-    if st.button("⭐\nお気に入り", key="tab_5"):
+    if st.button("⭐\nお気に", key="tab_5"):
         st.session_state.current_menu = "⭐ お気に入り"
 
+st.markdown(f"**現在地： {st.session_state.current_menu}**")
 st.divider()
 
 menu = st.session_state.current_menu
@@ -170,47 +179,44 @@ if menu == "🛒 なにがあるかな？":
     st.write("冷蔵庫にある食材を登録しましょう！")
     
     c_key = st.session_state.form_counter
-    food_name_input = st.text_input("食材名（例：キャベツ、豚肉、牛乳など）", key=f"fname_{c_key}")
+    food_name_input = st.text_input("食材名", placeholder="例：キャベツ、豚肉、牛乳など", key=f"fname_{c_key}")
+    food_qty_input = st.text_input("数量", placeholder="例：1玉、200g ※未入力でもOK", key=f"fqty_{c_key}")
     
-    col_q_in, col_c_in = st.columns(2)
-    with col_q_in:
-        food_qty_input = st.text_input("数量（例：1玉、200g ※未入力でもOK）", key=f"fqty_{c_key}")
-    with col_c_in:
-        def guess_category(name):
-            n = name.lower()
-            if any(w in n for w in ["米", "小麦粉", "パン", "パスタ", "うどん", "そば", "シリアル"]):
-                return "1. 🌾穀物・麺類・パン"
-            elif any(w in n for w in ["トマト", "キャベツ", "レタス", "玉ねぎ", "人参", "きゅうり", "じゃがいも", "野菜", "ネギ", "りんご", "バナナ", "みかん"]):
-                return "2. 🥑野菜・果物"
-            elif any(w in n for w in ["豚", "鶏", "牛", "肉", "ベーコン", "ソーセージ", "ひき肉", "卵"]):
-                return "3. 🍖肉類・畜産物"
-            elif any(w in n for w in ["鮭", "鯖", "えび", "魚", "アジ", "シーフード", "かまぼこ", "海苔"]):
-                return "4. 🐟️水産物・海藻"
-            elif any(w in n for w in ["牛乳", "チーズ", "バター", "ヨーグルト", "豆腐", "納豆", "油揚げ"]):
-                return "5. 🥛乳製品・大豆製品"
-            elif any(w in n for w in ["醤油", "味噌", "砂糖", "塩", "酢", "油", "マヨネーズ", "ケチャップ", "ソース"]):
-                return "6. 🧂調味料・油"
-            elif any(w in n for w in ["チョコ", "スナック", "アイス", "お菓子", "クッキー", "ケーキ"]):
-                return "7. 🍰お菓子・スイーツ"
-            else:
-                return "8. ❔️その他"
-
-        # 食材名が空のときはデフォルト未選択(None)、入力されたら自動反映
-        if food_name_input:
-            guessed = guess_category(food_name_input)
-            default_idx = categories.index(guessed)
+    def guess_category(name):
+        n = name.lower()
+        if any(w in n for w in ["米", "小麦粉", "パン", "パスタ", "うどん", "そば", "シリアル"]):
+            return "1. 🌾穀物・麺類・パン"
+        elif any(w in n for w in ["トマト", "キャベツ", "レタス", "玉ねぎ", "人参", "きゅうり", "じゃがいも", "野菜", "ネギ", "りんご", "バナナ", "みかん"]):
+            return "2. 🥑野菜・果物"
+        elif any(w in n for w in ["豚", "鶏", "牛", "肉", "ベーコン", "ソーセージ", "ひき肉", "卵"]):
+            return "3. 🍖肉類・畜産物"
+        elif any(w in n for w in ["鮭", "鯖", "えび", "魚", "アジ", "シーフード", "かまぼこ", "海苔"]):
+            return "4. 🐟️水産物・海藻"
+        elif any(w in n for w in ["牛乳", "チーズ", "バター", "ヨーグルト", "豆腐", "納豆", "油揚げ"]):
+            return "5. 🥛乳製品・大豆製品"
+        elif any(w in n for w in ["醤油", "味噌", "砂糖", "塩", "酢", "油", "マヨネーズ", "ケチャップ", "ソース"]):
+            return "6. 🧂調味料・油"
+        elif any(w in n for w in ["チョコ", "スナック", "アイス", "お菓子", "クッキー", "ケーキ"]):
+            return "7. 🍰お菓子・スイーツ"
         else:
-            default_idx = None
+            return "8. ❔️その他"
 
-        food_cat_input = st.selectbox(
-            "カテゴリ",
-            categories,
-            index=default_idx,
-            placeholder="食材を入力すると自動選択されます",
-            key=f"fcat_{c_key}"
-        )
+    # 初期状態はカテゴリを空欄（未選択）にする
+    default_idx = None
+    if food_name_input:
+        guessed = guess_category(food_name_input)
+        if guessed in categories:
+            default_idx = categories.index(guessed)
 
-    if st.button("✨ 食材を追加する", key="add_food_btn"):
+    food_cat_input = st.selectbox(
+        "カテゴリ",
+        categories,
+        index=default_idx,
+        placeholder="カテゴリを選択または自動入力",
+        key=f"fcat_{c_key}"
+    )
+
+    if st.button("✨ 食材を追加する"):
         if food_name_input:
             selected_cat = food_cat_input if food_cat_input else "8. ❔️その他"
             st.session_state.inventory.append({
@@ -234,8 +240,7 @@ if menu == "🛒 なにがあるかな？":
             with st.expander(f"{cat_name} ({len(cat_items)}件)", expanded=True):
                 if cat_items:
                     for i, item in cat_items:
-                        # 1行3カラム：食材名、数量、削除ボタン
-                        col_n, col_q, col_b = st.columns([3, 2, 1.3])
+                        col_n, col_q, col_b = st.columns([3, 2, 1])
                         with col_n:
                             new_name = st.text_input("食材名", value=item['name'], key=f"name_{i}", label_visibility="collapsed")
                         with col_q:
@@ -346,13 +351,15 @@ elif menu == "🍲 なに食べよう？":
                     response = model.generate_content(prompt)
                     result_text = response.text
                 else:
-                    result_text = """**メニュー名：トマトと豚肉のジューシー炒め**
-- **使った食材：** トマト, 豚肉スライス
-- **キッチン用品：** ヘルシオ
-- **作り方：**
-  1. 豚肉と切ったトマトを耐熱容器に入れます。
-  2. ヘルシオのまかせて調理にセットします。
-  3. ジューシーに仕上がり完成です！"""
+                    result_text = (
+                        "**メニュー名：トマトと豚肉のジューシー炒め**\n"
+                        "- **使った食材：** トマト, 豚肉スライス\n"
+                        "- **キッチン用品：** ヘルシオ\n"
+                        "- **作り方：**\n"
+                        "  1. 豚肉と切ったトマトを耐熱容器に入れます。\n"
+                        "  2. ヘルシオの「まかせて調理」にセットします。\n"
+                        "  3. ジューシーに仕上がり完成です！"
+                    )
                 
                 timestamp = datetime.now().strftime("%m/%d %H:%M")
                 st.session_state.history.insert(0, {"time": timestamp, "style": cooking_style, "content": result_text})
