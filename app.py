@@ -8,7 +8,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- 北欧ナチュラル風デザインのCSS適用（テキストエリアの背景も明るく調整） ---
+# --- 北欧ナチュラル風デザインのCSS適用（テキストエリアを強制的に白くする指定を追加） ---
 st.markdown("""
 <style>
     /* 全体の背景と文字色 */
@@ -45,12 +45,12 @@ st.markdown("""
         color: white;
     }
     
-    /* 入力欄（テキストボックス・テキストエリア）の背景をすっきり清潔感のある白に */
-    .stTextInput > div > div > input, .stTextArea > div > div > textarea {
-        border-radius: 12px;
-        border: 1px solid #D8CEC3;
+    /* 入力欄・テキストエリアの背景を確実に白にする */
+    .stTextInput input, textarea {
         background-color: #FFFFFF !important;
         color: #2C3E2D !important;
+        border-radius: 12px !important;
+        border: 1px solid #D8CEC3 !important;
     }
 </style>
 """, unsafe_allow_html=True)
